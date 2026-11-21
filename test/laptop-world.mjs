@@ -133,6 +133,43 @@ const result = await page.evaluate(async () => {
   mc.P.pos.set(home.x, home.y, home.z)
   mc.updVerity(0.05)
 
+  const fac = mc.factionInfo()
+  out.factions = fac
+  assert(fac && fac.overworld && fac.nether, 'both faction camps exist')
+  const ow = fac.overworld, ne = fac.nether
+  const sow = {x:ow.x+0.5-home.x, z:ow.z+0.5-home.z}, sne = {x:ne.x+0.5-home.x, z:ne.z+0.5-home.z}
+  assert(sow.x*sne.x+sow.z*sne.z<0, 'camps sit on opposite sides of spawn')
+  assert(Math.hypot(sow.x,sow.z)>14 && Math.hypot(sne.x,sne.z)>14, 'camps are a walk from spawn')
+  assert(mc.get(ow.x, ow.floor, ow.z)===mc.VERDANT, 'overworld floor is verdant')
+  assert(mc.get(ow.x-4, ow.floor+2, ow.z-4)===mc.OW_BANNER, 'overworld banner post')
+  assert(mc.get(ne.x, ne.floor, ne.z)===mc.NETHERRACK, 'nether floor is netherrack')
+  assert(mc.get(ne.x+1, ne.floor+1, ne.z)===mc.NBRICK || mc.get(ne.x+3, ne.floor+1, ne.z)===mc.NBRICK, 'nether brick wall')
+  assert(mc.get(ne.x-4, ne.floor+2, ne.z-4)===mc.NE_BANNER, 'nether banner post')
+  const cg=(ow.body>>8)&255, cr=ow.body>>16&255
+  const ng=(ne.body>>8)&255, nr=ne.body>>16&255
+  assert(cg>cr && nr>ng && ow.body!==ne.body, 'Cedar is green and Cinder is red '+ow.body.toString(16)+' '+ne.body.toString(16))
+  assert(ow.name==='Cedar' && ne.name==='Cinder', 'named faction keepers')
+  mc.P.pos.set(ow.nx, ow.ny, ow.nz+1.1)
+  window.dispatchEvent(new KeyboardEvent('keydown', {code:'KeyG', bubbles:true}))
+  assert(document.getElementById('factionSay').textContent.startsWith('Cedar: Overworld welcomes you'), 'Cedar greeting')
+  assert(mc.count(mc.SUN_BADGE)===1 && mc.count(mc.VERDANT)>=16, 'overworld reward in inventory')
+  window.dispatchEvent(new KeyboardEvent('keydown', {code:'KeyG', bubbles:true}))
+  assert(mc.count(mc.SUN_BADGE)===1, 'sun badge is not given twice')
+  assert(mc.state()==='play', 'G does not open crafting or a computer')
+  assert(mc.BD[mc.VERDANT].name==='Verdant Block' && mc.BD[mc.NETHERRACK].name==='Netherrack' && mc.BD[mc.VERDANT].drop===mc.VERDANT, 'faction blocks are named and drop themselves when mined')
+  mc.enableTouch()
+  mc.P.pos.set(ne.nx, ne.ny, ne.nz+1.1)
+  mc.syncVerityHud(); if(mc.updVerity) mc.updVerity(0.05)
+  const fb=document.getElementById('btnFaction')
+  assert(fb && getComputedStyle(fb).display!=='none', 'touch faction button visible')
+  fb.click()
+  assert(document.getElementById('factionSay').textContent.startsWith('Cinder: Nether welcomes you'), 'Cinder greeting')
+  assert(mc.count(mc.EMBER_BADGE)===1 && mc.count(mc.NETHERRACK)>=16, 'nether reward in inventory')
+  document.body.classList.remove('touch')
+  mc.P.pos.set(home.x, home.y, home.z)
+  out.owBlock={x:ow.x-4,y:ow.floor+2,z:ow.z-4}
+  out.neBlock={x:ne.x-4,y:ne.floor+2,z:ne.z-4}
+
   const L = mc.laptopPos()
   assert(L && Number.isFinite(L.x), 'laptop placed')
   const spawn = {x:mc.P.pos.x, y:mc.P.pos.y, z:mc.P.pos.z}
@@ -238,6 +275,10 @@ const result = await page.evaluate(async () => {
   }
   assert(spawnHit===0, 'spawn neighborhood kept clear')
   assert(changed===sites.length, 'each site has a solid floor block')
+  const camps=[out.factions.overworld,out.factions.nether]
+  let campHit=0
+  for(const s of sites) for(const c of camps) if(Math.hypot(s.x-c.x,s.z-c.z)<12) campHit++
+  assert(campHit===0, 'building computer leaves faction camps alone')
   assert(mc.worldChecksum()!==sum0, 'yes changed the world')
 
   const n1 = rep1.count
@@ -246,10 +287,12 @@ const result = await page.evaluate(async () => {
   const rep2 = mc.buildReport()
   out.build2 = {count:rep2.count, by:rep2.by}
   assert(rep2.count>n1 && rep2.count<=rep2.cap, 'repeat adds buildings without passing the cap '+rep2.count)
+  const radOf=t=>t==='hall'?4:t==='tower'?2:3
   let overlap=0
   const s2 = rep2.sites
   for (let i=0;i<s2.length;i++) for (let j=i+1;j<s2.length;j++){
-    if (Math.abs(s2[i].x-s2[j].x)<=8 && Math.abs(s2[i].z-s2[j].z)<=8) overlap++
+    const need=radOf(s2[i].type)+radOf(s2[j].type)+3
+    if (Math.abs(s2[i].x-s2[j].x)<=need && Math.abs(s2[i].z-s2[j].z)<=need) overlap++
   }
   assert(overlap===0, 'repeat does not stack sites, overlap '+overlap)
   const beforeCap = mc.worldChecksum()
@@ -300,6 +343,8 @@ const result = await page.evaluate(async () => {
   assert(mc.get(1,39,1)===mc.AIR, 'high air stayed air')
   assert(mc.get(body.x, body.y, body.z)===mc.AIR, 'player body stayed air')
   assert(mc.get(foot.x, foot.y, foot.z)===mc.DBLK, 'ground under feet became diamond block')
+  assert(mc.get(out.owBlock.x,out.owBlock.y,out.owBlock.z)===mc.DBLK, 'overworld camp becomes diamond blocks')
+  assert(mc.get(out.neBlock.x,out.neBlock.y,out.neBlock.z)===mc.DBLK, 'nether camp becomes diamond blocks')
   const auditD = mc.auditBlocks(mc.DBLK)
   assert(auditD.other===0 && auditD.match+auditD.air===auditD.n && auditD.air>0 && auditD.match>1000000, 'full map non-air is diamond block '+JSON.stringify(auditD))
   out.auditDiamond = auditD
@@ -371,6 +416,8 @@ const result = await page.evaluate(async () => {
   assert(L2 && B2 && B2.visible!==false && Math.hypot(L2.x-B2.x, L2.z-B2.z)>mc.LAP_REACH, 'new world respawns both computers')
   assert(mc.buildReport().count===0, 'construction list resets with the world')
   assert(mc.verity() && mc.verity().line==="Hi, I'm Verity" && Math.hypot(mc.verity().x-mc.P.pos.x, mc.verity().z-mc.P.pos.z)<3, 'new world greets with Verity beside the player')
+  const fac2=mc.factionInfo()
+  assert(fac2.overworld && fac2.nether && mc.get(fac2.overworld.x,fac2.overworld.floor,fac2.overworld.z)===mc.VERDANT && mc.get(fac2.nether.x,fac2.nether.floor,fac2.nether.z)===mc.NETHERRACK, 'new world rebuilds both faction camps')
   assert(mc.SX===512 && mc.SY===40 && mc.SZ===1024, 'map size unchanged')
   out.spawn = spawn
   out.laptop = L
@@ -423,6 +470,27 @@ await page.evaluate(() => {
   mc.openVerityChat()
 })
 await page.screenshot({path: shots+'/verity-chat.png'})
+await page.evaluate(async () => {
+  const mc = window.__mc
+  mc.closeVerityChat()
+  mc.startPlay()
+  mc.setNoLock()
+  const f = mc.factionInfo().overworld
+  mc.P.pos.set(f.x+0.5, f.floor+1, f.z+7.5)
+  mc.P.yaw = Math.atan2(-(f.x+0.5-mc.P.pos.x), -(f.z+0.5-mc.P.pos.z))
+  mc.P.pitch = -0.15
+  for (let i=0;i<5;i++) await new Promise(r => requestAnimationFrame(r))
+})
+await page.screenshot({path: shots+'/overworld-camp.png'})
+await page.evaluate(async () => {
+  const mc = window.__mc
+  const f = mc.factionInfo().nether
+  mc.P.pos.set(f.x+0.5, f.floor+1, f.z+7.5)
+  mc.P.yaw = Math.atan2(-(f.x+0.5-mc.P.pos.x), -(f.z+0.5-mc.P.pos.z))
+  mc.P.pitch = -0.15
+  for (let i=0;i<5;i++) await new Promise(r => requestAnimationFrame(r))
+})
+await page.screenshot({path: shots+'/nether-camp.png'})
 
 const src = readFileSync('/workspace/index.html', 'utf8')
 const srcFails = []

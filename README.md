@@ -41,6 +41,10 @@ Verity is the yellow ball that appears beside you and says “Hi, I'm Verity”.
 
 Her replies are prepared sentences stored in the page, in English and Chinese, about the computers, gravity, missiles, crafting, and carrying her. She is not a live AI. A real chat model would need a separate account, an API key kept out of the page, and a network call.
 
+## Factions
+
+Both camps are on this same map. The sky does not change. Walk **east** from spawn to the green **Overworld** camp and meet **Cedar**. Walk **west** to the red **Nether** camp and meet **Cinder**. Press **G**, or tap **阵营**, to talk. Each keeper gives a badge and a stack of their block once: verdant blocks or netherrack. Those blocks can be mined and placed. Banner posts mark each camp. The material laptop still turns those blocks into diamond or glass with the rest of the world.
+
 ## Gravity pull
 
 Mining a block, or picking up an item, pulls nearby loose blocks and creatures toward you. The pull covers one cube centered on you that is **10 blocks wide, 10 tall, and 10 deep** (about 5 blocks out in every direction). A glowing outline shows that cube. Bedrock is never pulled, and the pull does not hurt you.

@@ -123,6 +123,9 @@ body.touch.near-verity #btnTalk,body.touch.near-verity #btnCarry,body.touch.carr
 #verityChat small{display:block;font-weight:normal;color:#ffd9a0}
 #verityLog{max-height:28vh;overflow:auto;background:rgba(0,0,0,.35);padding:6px;margin-bottom:8px}
 #verityForm{display:flex;gap:6px}#verityInput{flex:1;font:14px monospace;padding:6px}
+#btnFaction{display:none;position:absolute;left:50%;bottom:calc(210px + env(safe-area-inset-bottom));transform:translateX(-50%);width:132px;height:46px;z-index:7}
+body.touch.near-faction #btnFaction{display:block}
+#factionSay{position:fixed;left:50%;top:22%;transform:translateX(-50%);z-index:14;display:none;max-width:min(92vw,460px);background:rgba(0,0,0,.8);color:#fff;border:3px solid #ccc;padding:8px 12px;font-weight:bold;text-align:center}
 body.touch.near-lap #btnUse{display:block}
 #genOv{z-index:40;background:rgba(0,0,0,.72)}
 #laptopDlg,#buildDlg{z-index:30}
@@ -130,11 +133,12 @@ body.touch.near-lap #btnUse{display:block}
 #laptopDlg p,#buildDlg p{font-size:15px;line-height:1.45;margin:8px 0}
 </style></head><body>
 <div id="hud">
- <div id="hint">Click to capture mouse &middot; Mouse look<br>WASD / Arrows move &middot; Space jump &middot; Shift sprint<br>Left click mine / attack &middot; Right click place<br>E crafting &middot; 1-9 / wheel select<br>T talk to Verity &middot; F pick up / put down<br>R new world &middot; Esc pause</div>
+ <div id="hint">Click to capture mouse &middot; Mouse look<br>WASD / Arrows move &middot; Space jump &middot; Shift sprint<br>Left click mine / attack &middot; Right click place<br>E crafting &middot; 1-9 / wheel select<br>T talk to Verity &middot; F pick up / put down<br>G talk to a faction camp<br>R new world &middot; Esc pause</div>
  <div id="stats"></div>
  <div id="cross"></div><div id="mineBar"><div></div></div><div id="toast"></div>
  <div id="lapHint"></div>
  <div id="verityHud" style="display:none"><div id="verityName">Verity</div><div id="verityBubble"></div></div>
+ <div id="factionSay"></div>
  <div id="itemName"></div>
  <button type="button" class="ctrl-btn" id="ctrlBtnHud">开始操纵：关</button>
  <div id="hearts"></div>
@@ -151,6 +155,7 @@ body.touch.near-lap #btnUse{display:block}
    <button type="button" class="tbtn" id="btnUse">使用电脑</button>
    <button type="button" class="tbtn" id="btnTalk">交谈</button>
    <button type="button" class="tbtn" id="btnCarry">抱起</button>
+   <button type="button" class="tbtn" id="btnFaction">阵营</button>
   </div>
  </div>
 </div>
@@ -164,6 +169,7 @@ body.touch.near-lap #btnUse{display:block}
   &bull; <b>Phone &amp; tablet:</b> left joystick to move, drag the right half of the screen to look, on-screen <b>Jump</b>, hold <b>Mine / Attack</b>, <b>Place</b>, <b>Craft</b>, tap the hotbar, <b>New World</b>. Near the laptop, <b>使用电脑</b> / Craft opens it<br>
   &bull; <b>更大更长的陆地：</b>地图 <b>512×1024</b>（高 40，原来是 256×256）。出生点北面并排两台电脑：左边<b>材质</b>（青色，是＝钻石块，否＝玻璃块），右边<b>建造</b>（橙色，是＝在各地盖房屋、塔、大厅和小教堂，否＝不改地形）。靠近后按 <b>E</b>，离得近的那一台生效。手机点对应的使用按钮。走开再按 E 仍是合成<br>
   &bull; <b>Verity</b> is the yellow ball beside you, not a white orb. She says <b>Hi, I'm Verity</b>. Press <b>T</b> to chat (saved replies, not a live AI). Look at her and press <b>F</b> to carry her, then <b>F</b> to put her down. On a phone, tap <b>交谈</b> and <b>抱起</b>. Hitting her says <b>Ouch, why you hit me?</b><br>
+  &bull; <b>Factions, same map:</b> walk <b>east</b> to the green <b>Overworld</b> camp (Cedar) and <b>west</b> to the red <b>Nether</b> camp (Cinder). Press <b>G</b> or tap <b>阵营</b>. They give a badge and themed blocks. The sky does not change.<br>
   &bull; Explore a huge world: <b>caves</b>, <b>mineshafts</b> with torches, ores, and <b>villages</b> with friendly wandering villagers (they never attack)<br>
   &bull; <b>Zombies</b> hunt you and iron golems — a zombie kills a golem in one hit<br>
   &bull; <b>Iron golems</b> smash zombies in <b>one hit</b>, and <b>never attack you</b> unless <b>开始操纵</b> is on (then they chase and punch for 2 hearts). One hit from you destroys a golem… and <b>two new golems</b> rise in its place!<br>
@@ -216,12 +222,12 @@ function dprCap(){return Math.min(devicePixelRatio||1,touchMode?1.5:2)}
 const $=id=>document.getElementById(id);
 const rnd=n=>Math.floor(Math.random()*n),clamp=v=>Math.max(0,Math.min(255,v|0));
 // ================= blocks & items =================
-const AIR=0,GRASS=1,DIRT=2,STONE=3,SAND=4,WATER=5,LOG=6,LEAVES=7,PLANKS=8,COBBLE=9,COAL=10,IRON=11,GOLD=12,DIAMOND=13,GLASS=14,BEDROCK=15,BRICK=16,GRAVEL=17,DOOR_LOW=18,DOOR_TOP=19,FARMLAND=20,WHEAT=21,TABLE=22,FURNACE=23,TORCH=24,DBLK=25;
-const STICK=100,COAL_I=101,IRON_INGOT=102,DIAMOND_I=103,WOOD_SWORD=110,STONE_SWORD=111,IRON_SWORD=112,WOOD_PICK=113,STONE_PICK=114,MISSILE=115,DF_MISSILE=116;
+const AIR=0,GRASS=1,DIRT=2,STONE=3,SAND=4,WATER=5,LOG=6,LEAVES=7,PLANKS=8,COBBLE=9,COAL=10,IRON=11,GOLD=12,DIAMOND=13,GLASS=14,BEDROCK=15,BRICK=16,GRAVEL=17,DOOR_LOW=18,DOOR_TOP=19,FARMLAND=20,WHEAT=21,TABLE=22,FURNACE=23,TORCH=24,DBLK=25,VERDANT=26,OW_BANNER=27,NETHERRACK=28,NBRICK=29,NE_BANNER=30;
+const STICK=100,COAL_I=101,IRON_INGOT=102,DIAMOND_I=103,WOOD_SWORD=110,STONE_SWORD=111,IRON_SWORD=112,WOOD_PICK=113,STONE_PICK=114,MISSILE=115,DF_MISSILE=116,SUN_BADGE=120,EMBER_BADGE=121;
 const NOSOLID=new Set([AIR,WATER,DOOR_LOW,DOOR_TOP,WHEAT,TORCH]);
 const HARD=new Set([STONE,COBBLE,COAL,IRON,GOLD,DIAMOND,BRICK,FURNACE,DBLK]);
-const T={grassTop:0,grassSide:1,dirt:2,stone:3,sand:4,water:5,logSide:6,logTop:7,leaves:8,planks:9,cobble:10,coal:11,iron:12,gold:13,diamond:14,glass:15,bedrock:16,brick:17,gravel:18,doorLow:19,doorTop:20,farmland:21,wheat:22,tableTop:23,tableSide:24,furnaceSide:25,furnaceFront:26,torch:27,dblock:28};
-const NT=29;
+const T={grassTop:0,grassSide:1,dirt:2,stone:3,sand:4,water:5,logSide:6,logTop:7,leaves:8,planks:9,cobble:10,coal:11,iron:12,gold:13,diamond:14,glass:15,bedrock:16,brick:17,gravel:18,doorLow:19,doorTop:20,farmland:21,wheat:22,tableTop:23,tableSide:24,furnaceSide:25,furnaceFront:26,torch:27,dblock:28,verdant:29,owBanner:30,netherrack:31,nbrick:32,neBanner:33};
+const NT=34;
 const BD=[];
 function def(id,name,side,top,bottom,tr,drop){BD[id]={name,t:[side,top==null?side:top,bottom==null?(top==null?side:top):bottom],tr:!!tr,drop:drop===undefined?id:drop}}
 def(AIR,'Air',0,0,0,true,0);def(GRASS,'Grass Block',T.grassSide,T.grassTop,T.dirt,false,DIRT);def(DIRT,'Dirt',T.dirt);def(STONE,'Stone',T.stone,null,null,false,COBBLE);
@@ -231,6 +237,7 @@ def(DIAMOND,'Diamond Ore',T.diamond,null,null,false,DIAMOND_I);def(GLASS,'Glass'
 def(GRAVEL,'Gravel Path',T.gravel);def(DOOR_LOW,'Oak Door',T.doorLow,T.planks,T.planks,true);def(DOOR_TOP,'Oak Door',T.doorTop,T.planks,T.planks,true,DOOR_LOW);
 def(FARMLAND,'Farmland',T.dirt,T.farmland,T.dirt,false,DIRT);def(WHEAT,'Wheat',T.wheat,T.wheat,T.wheat,true,0);
 def(TABLE,'Crafting Table',T.tableSide,T.tableTop,T.planks);def(FURNACE,'Furnace',T.furnaceFront,T.furnaceSide,T.furnaceSide);def(TORCH,'Torch',T.torch,null,null,true);def(DBLK,'Diamond Block',T.dblock);
+def(VERDANT,'Verdant Block',T.verdant);def(OW_BANNER,'Overworld Banner',T.owBanner);def(NETHERRACK,'Netherrack',T.netherrack);def(NBRICK,'Nether Brick',T.nbrick);def(NE_BANNER,'Nether Banner',T.neBanner);
 // ================= textures =================
 function px(c,x,y,r,g,b,a){c.fillStyle=`rgba(${clamp(r)},${clamp(g)},${clamp(b)},${a==null?1:a})`;c.fillRect(x,y,1,1)}
 function noise(c,[r,g,b],v,y0=0,y1=16,x0=0,x1=16){for(let i=x0;i<x1;i++)for(let j=y0;j<y1;j++){const d=(Math.random()-.5)*v;px(c,i,j,r+d,g+d,b+d)}}
@@ -265,7 +272,12 @@ const TILE_DRAW=[
  c=>{noise(c,[110,110,110],20);c.fillStyle='#5f5f5f';c.fillRect(0,0,16,1);c.fillRect(0,15,16,1)},
  c=>{noise(c,[110,110,110],20);c.fillStyle='#4a4a4a';c.fillRect(3,7,10,6);c.fillStyle='#ff9b2e';c.fillRect(5,10,6,3);c.fillStyle='#ffd34d';c.fillRect(7,11,2,2);c.fillStyle='#333';c.fillRect(2,3,12,2)},
  c=>{c.fillStyle='#6b4a2b';c.fillRect(0,0,16,16);c.fillStyle='#8a6238';c.fillRect(4,4,8,12);c.fillStyle='#ffd34d';c.fillRect(0,0,16,4);c.fillStyle='#fff6b0';c.fillRect(4,1,8,2)},
- c=>{c.fillStyle='#128a99';c.fillRect(0,0,16,16);c.fillStyle='#3ad7ea';c.fillRect(1,1,14,14);c.fillStyle='#7af4ff';c.fillRect(3,3,6,5);c.fillStyle='#e9ffff';c.fillRect(4,4,3,2);c.fillStyle='#0c6470';c.fillRect(0,0,16,1);c.fillRect(0,15,16,1);c.fillRect(0,0,1,16);c.fillRect(15,0,1,16)}
+ c=>{c.fillStyle='#128a99';c.fillRect(0,0,16,16);c.fillStyle='#3ad7ea';c.fillRect(1,1,14,14);c.fillStyle='#7af4ff';c.fillRect(3,3,6,5);c.fillStyle='#e9ffff';c.fillRect(4,4,3,2);c.fillStyle='#0c6470';c.fillRect(0,0,16,1);c.fillRect(0,15,16,1);c.fillRect(0,0,1,16);c.fillRect(15,0,1,16)},
+ c=>{c.fillStyle='#1f8a3a';c.fillRect(0,0,16,16);c.fillStyle='#7dcf45';c.fillRect(1,1,14,14);c.fillStyle='#f2d15a';c.fillRect(3,3,3,3);c.fillRect(10,9,3,3)},
+ c=>{c.fillStyle='#146b32';c.fillRect(0,0,16,16);c.fillStyle='#f0c53a';c.fillRect(6,0,4,16);c.fillStyle='#e8f7c8';c.fillRect(2,3,2,2);c.fillRect(12,10,2,2)},
+ c=>{c.fillStyle='#6a2018';c.fillRect(0,0,16,16);for(let k=0;k<18;k++){const x=rnd(15),y=rnd(15);c.fillStyle=k%2?'#a33a28':'#3a100e';c.fillRect(x,y,2,2)}},
+ c=>{c.fillStyle='#4a1218';c.fillRect(0,0,16,16);c.fillStyle='#7a2430';for(let row=0;row<4;row++){const off=row%2?4:0;for(let b=0;b<3;b++)c.fillRect(off+b*6,row*4,5,3)}},
+ c=>{c.fillStyle='#2a0a0c';c.fillRect(0,0,16,16);c.fillStyle='#ff6a1a';c.fillRect(6,0,4,16);c.fillStyle='#ffb020';c.fillRect(2,4,2,2);c.fillRect(12,10,2,2)}
 ];
 if(TILE_DRAW.length!==NT)throw new Error('tiles '+TILE_DRAW.length+'!='+NT);
 const tiles=TILE_DRAW.map(fn=>{const cv=document.createElement('canvas');cv.width=cv.height=16;fn(cv.getContext('2d'));return cv});
@@ -293,6 +305,8 @@ item(STONE_PICK,'Stone Pickaxe',pick('#9a9a9a','#666'),{pick:.07,tool:1});
 item(MISSILE,'Missile',c=>{c.fillStyle='#e8e8e8';for(let i=0;i<9;i++)c.fillRect(4+i,12-i,3,3);c.fillStyle='#c8c8c8';for(let i=0;i<9;i++)c.fillRect(5+i,13-i,1,2);c.fillStyle='#e01818';c.fillRect(12,1,4,4);c.fillRect(13,0,2,2);c.fillStyle='#fff';c.fillRect(13,2,1,1);c.fillStyle='#cc2020';c.fillRect(3,12,2,3);c.fillRect(5,14,3,2);c.fillStyle='#ffb020';c.fillRect(2,13,2,2);c.fillRect(1,14,2,2)},{infinite:1});
 item(DF_MISSILE,'东风导弹',c=>{c.clearRect(0,0,16,16);c.fillStyle='#3f4f2c';c.fillRect(6,3,4,11);c.fillStyle='#556b3a';c.fillRect(7,3,2,11);c.fillStyle='#f4f0e4';c.fillRect(6,2,4,2);c.fillRect(7,1,2,2);c.fillRect(8,0,1,2);c.fillStyle='#c8c4b8';c.fillRect(7,2,1,1);c.fillStyle='#2a351c';c.fillRect(4,12,3,3);c.fillRect(9,12,3,3);c.fillRect(5,13,6,2);c.fillStyle='#c01010';c.fillRect(6,7,4,2);c.fillStyle='#e01818';c.fillRect(7,6,2,2);c.fillRect(6,7,1,1);c.fillRect(9,7,1,1);c.fillRect(8,5,1,1);},{infinite:1});
 FLAT[TORCH]=cv16(c=>{c.fillStyle='#6b4a2b';c.fillRect(7,6,2,9);c.fillStyle='#ffd34d';c.fillRect(6,3,4,3);c.fillStyle='#fff6b0';c.fillRect(7,4,2,1)});
+item(SUN_BADGE,'Sun Badge',c=>{c.fillStyle='#f0c53a';c.fillRect(4,4,8,8);c.fillStyle='#fff1a8';c.fillRect(6,2,4,2);c.fillRect(6,12,4,2);c.fillRect(2,6,2,4);c.fillRect(12,6,2,4);c.fillStyle='#2f9e4a';c.fillRect(6,6,4,4)});
+item(EMBER_BADGE,'Ember Badge',c=>{c.fillStyle='#8a1a14';c.fillRect(4,4,8,8);c.fillStyle='#ff6a1a';c.fillRect(6,2,4,3);c.fillRect(7,5,2,6);c.fillStyle='#ffb020';c.fillRect(6,3,2,2)});
 FLAT[WHEAT]=tiles[T.wheat];FLAT[DOOR_LOW]=tiles[T.doorLow];
 const nameOf=id=>id>=100?IT[id].name:BD[id].name;
 const maxStack=id=>id>=100&&IT[id].tool?1:99;
@@ -326,7 +340,7 @@ function vnoise(x,z){const xi=Math.floor(x),zi=Math.floor(z),xf=x-xi,zf=z-zi,u=x
 function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 function beginGen(){
  try{
-  xform=null;buildJob=null;buildSites=[];worldWrecked=false;clearVerity();
+  xform=null;buildJob=null;buildSites=[];worldWrecked=false;clearVerity();clearFaction();
   if(typeof endDongfeng==='function')endDongfeng();
   chunks.forEach(discardChunk);
   if(typeof clearAllMobs==='function')clearAllMobs();
@@ -845,6 +859,7 @@ addEventListener('keydown',e=>{if(['Space','ArrowUp','ArrowDown','ArrowLeft','Ar
  if(e.code==='KeyE'&&state==='play'){interact();return}
  if(e.code==='KeyT'&&state==='play'&&nearVerity()){openVerityChat();return}
  if(e.code==='KeyF'&&state==='play'){toggleCarry(false);return}
+ if(e.code==='KeyG'&&state==='play'){talkFaction();return}
  if(e.code==='Escape'&&state==='play'&&!locked){state='pause';$('pause').classList.remove('hidden');return}
  if(e.code==='Space'&&!e.repeat)noteJumpTap();
  keys[e.code]=true;if(state==='play'&&/^Digit[1-9]$/.test(e.code))select(+e.code[5]-1)});
@@ -967,7 +982,7 @@ function handleMining(dt){actT-=dt;const a=aimInfo();
  if(actT>0)return;mineP+=dt/t;swing=Math.max(swing,.5);if(mineP>=1){breakBlock(hit);mineP=0;mineKey='';actT=.12}}
 let missileCd=0,camShake=0,worldWrecked=false,dfLaunch=null;
 function endDongfeng(){if(!dfLaunch)return;if(dfLaunch.mesh){scene.remove(dfLaunch.mesh);dfLaunch.mesh.traverse(o=>{if(o.geometry)o.geometry.dispose()})}dfLaunch=null}
-function wipeWorld(){xform=null;buildJob=null;world.fill(0);colTop.fill(-1);torches.clear();worldWrecked=true;chunks.forEach(discardChunk);clearAllMobs();if(laptop&&laptop.mesh)laptop.mesh.visible=false;if(laptop&&laptop.sign)laptop.sign.visible=false;if(buildPc&&buildPc.mesh)buildPc.mesh.visible=false;if(buildPc&&buildPc.sign)buildPc.sign.visible=false;zTimer=cTimer=wgTimer=1e9;placeVerityBeside(true)}
+function wipeWorld(){xform=null;buildJob=null;world.fill(0);colTop.fill(-1);torches.clear();worldWrecked=true;chunks.forEach(discardChunk);clearAllMobs();if(laptop&&laptop.mesh)laptop.mesh.visible=false;if(laptop&&laptop.sign)laptop.sign.visible=false;if(buildPc&&buildPc.mesh)buildPc.mesh.visible=false;if(buildPc&&buildPc.sign)buildPc.sign.visible=false;zTimer=cTimer=wgTimer=1e9;clearFaction();placeVerityBeside(true)}
 function detonateDongfeng(){endDongfeng();snd('boom');setTimeout(()=>{try{snd('boom')}catch(e){}},90);setTimeout(()=>{try{snd('boom')}catch(e){}},180);
  let flash=$('blastFlash');if(!flash){flash=document.createElement('div');flash.id='blastFlash';flash.style.cssText='position:fixed;inset:0;pointer-events:none;background:#fff;opacity:0;z-index:18;transition:opacity .4s';document.body.appendChild(flash)}
  flash.style.transition='opacity .15s';flash.style.background='#fff';flash.style.opacity='1';setTimeout(()=>{flash.style.transition='opacity .6s';flash.style.opacity='0'},220);
@@ -1191,6 +1206,7 @@ function blockedPoint(x,z,min){
  const pts=[[spawn.x,spawn.z,18]];
  if(laptop)pts.push([laptop.x,laptop.z,12]);
  if(buildPc)pts.push([buildPc.x,buildPc.z,12]);
+ for(const c of factionCamps)pts.push([c.x+.5,c.z+.5,20]);
  pts.push([P.pos.x,P.pos.z,10]);
  for(const [px,pz,d] of pts) if(Math.hypot(x-px,z-pz)<Math.max(min||0,d)) return true;
  return false;
@@ -1393,12 +1409,13 @@ function finishWorldSpawn(){
   gameTime=0;zTimer=0;mined=kills=diamonds=golemKills=golemDeaths=0;respawn();resetInv();
   placeLaptop();
   camera.position.set(spawn.x,spawn.y+8,spawn.z);buildAround(spawn.x,spawn.z,VIEW+20);
+  buildFactions();
   spawnVerity(true);
   villages.forEach(spawnVillageMobs);spawnWorldGolems(24);spawnWhiteGolems(WG_TARGET);
   for(let i=0;i<4;i++)spawnZombie(20);spawnCreeper(22);spawnCreeper(28);
   const wantPlay=playAfterGen;playAfterGen=false;gen=null;
   const ov=$('genOv');if(ov)ov.classList.add('hidden');
-  toast('世界已生成 '+SX+'×'+SZ+'。北面左边是材质电脑，右边是建造电脑');
+  toast('世界已生成 '+SX+'×'+SZ+'。东边绿营 Overworld，西边红营 Nether。靠近按 G');
   if(wantPlay)startPlay();else if(state==='gen')state='menu';
  }catch(err){gen=null;const ov=$('genOv');if(ov)ov.classList.add('hidden');toast('世界生成失败：'+(err&&err.message||err));state='menu'}
 }
@@ -1449,6 +1466,10 @@ const VERITY_BAGS={
  hit:[
   "Please don't hit me. If I faint, I appear again beside you.",
   "请别打我。如果我倒下了，我会在你身边再出现。"
+ ],
+ faction:[
+  "Walk east to the green Overworld camp and talk to Cedar with G. Walk west to the red Nether camp and talk to Cinder. The sky does not change.",
+  "向东是绿色 Overworld 营地，靠近 Cedar 按 G。向西是红色 Nether 营地，靠近 Cinder 按 G。天空不会变。"
  ]
 };
 const VERITY_DEFAULT=[
@@ -1464,7 +1485,8 @@ function verityReply(raw){
  else if(/抱|carry|pick me|放下|drop me|\bf\b/.test(q))key='carry';
  else if(/合成|craft|制作/.test(q))key='craft';
  else if(/地图|多大|512|1024|how big|world size/.test(q))key='map';
- else if(/golem|傀儡|白球|white orb|光球/.test(q))key='golem';
+ else if(/overworld|nether|阵营|cedar|cinder|verdant|netherrack|徽章|badge/.test(q))key='faction';
+ else if(/golem|傀儡|白球|white ball|光球/.test(q))key='golem';
  else if(/飞|fly|creative|创造/.test(q))key='fly';
  else if(/打我|hit me|ouch|hurt|为什么打/.test(q))key='hit';
  else if(/verity|你是谁|who are you|hello|hi\b|你好|嗨|你叫/.test(q))key='self';
@@ -1613,11 +1635,113 @@ function updVerity(dt){
   else verity.pos.y+=(target-verity.pos.y)*Math.min(1,dt*8);
  }
  syncVerityHud();
+ updateFactionUi();
 }
 if($('verityForm'))$('verityForm').addEventListener('submit',e=>{e.preventDefault();sendVerityChat()});
 if($('verityClose'))$('verityClose').onclick=()=>closeVerityChat();
 if($('btnTalk'))$('btnTalk').onclick=()=>{unlockAudio();openVerityChat()};
 if($('btnCarry'))$('btnCarry').onclick=()=>{unlockAudio();toggleCarry(true)};
+if($('btnFaction'))$('btnFaction').onclick=()=>{unlockAudio();talkFaction()};
+
+// ================= factions: Overworld east, Nether west, same map (no second dimension, sky unchanged) =================
+let factionCamps=[],factionNpcs=[];
+function clearFaction(){
+ for(const n of factionNpcs){if(n.group){scene.remove(n.group);n.group.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){if(o.material.map)o.material.map.dispose();if(o.material.dispose)o.material.dispose()}})}}
+ factionNpcs=[];factionCamps=[];
+ const say=$('factionSay');if(say)say.style.display='none';
+}
+function factionTag(text,color){
+ const cv=document.createElement('canvas');cv.width=320;cv.height=64;const g=cv.getContext('2d');
+ g.fillStyle='rgba(0,0,0,.72)';g.fillRect(4,8,312,48);g.strokeStyle=color;g.lineWidth=6;g.strokeRect(4,8,312,48);
+ g.fillStyle=color;g.font='bold 28px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(text,160,32);
+ const tex=new THREE.CanvasTexture(cv);tex.magFilter=THREE.NearestFilter;
+ const mesh=new THREE.Mesh(new THREE.PlaneGeometry(1.7,.36),new THREE.MeshBasicMaterial({map:tex,transparent:true,depthWrite:false,side:THREE.DoubleSide}));
+ mesh.position.y=2.05;return mesh;
+}
+function campAnchor(dir){
+ const sx=Math.round(spawn.x),sz=Math.round(spawn.z);
+ const roomX=Math.max(0,Math.min(sx-16,SX-17-sx)),roomZ=Math.max(0,Math.min(sz-16,SZ-17-sz));
+ const useX=roomX>=roomZ;
+ const dist=Math.min(32,Math.max(18,useX?roomX:roomZ));
+ if(useX)return {x:Math.max(16,Math.min(SX-17,sx+dir*dist)),z:sz};
+ return {x:sx,z:Math.max(16,Math.min(SZ-17,sz+dir*dist))};
+}
+function campFloorAt(cx,cz){
+ let max=2;
+ for(let dz=-4;dz<=4;dz++)for(let dx=-4;dx<=4;dx++){const g=groundY(cx+dx,cz+dz);if(g>max)max=g}
+ return Math.max(2,Math.min(SY-8,max));
+}
+function paintCamp(cx,cz,floor,floorB,wallB,banner){
+ for(let dz=-4;dz<=4;dz++)for(let dx=-4;dx<=4;dx++){
+  const x=cx+dx,z=cz+dz,g=groundY(x,z);
+  for(let y=Math.max(1,g+1);y<floor;y++)setBlock(x,y,z,wallB,true);
+  setBlock(x,floor,z,floorB,true);
+  for(let y=floor+1;y<=floor+5;y++)if(get(x,y,z)!==BEDROCK)setBlock(x,y,z,AIR,true);
+ }
+ for(const [dx,dz] of [[-4,-4],[-4,4],[4,-4],[4,4]]){for(let h=1;h<=3;h++)setBlock(cx+dx,floor+h,cz+dz,banner,true)}
+ for(let dz=-2;dz<=2;dz++)for(let dx=1;dx<=3;dx++){
+  const edge=dx===3||Math.abs(dz)===2;
+  if(edge){setBlock(cx+dx,floor+1,cz+dz,wallB,true);setBlock(cx+dx,floor+2,cz+dz,wallB,true);if(dx===3)setBlock(cx+dx,floor+3,cz+dz,banner,true)}
+ }
+ setBlock(cx+2,floor+2,cz,GLASS,true);
+ flushDirty();
+}
+function makeFactionNpc(kind,x,y,z){
+ const over=kind==='overworld';
+ const group=new THREE.Group();
+ const bodyMat=new THREE.MeshLambertMaterial({color:over?0x2f9e4a:0x8a1a14});
+ const headMat=new THREE.MeshLambertMaterial({color:over?0xf0d060:0xff6a1a});
+ const body=new THREE.Mesh(new THREE.BoxGeometry(.62,.9,.42),bodyMat);body.position.y=.85;group.add(body);
+ const head=new THREE.Mesh(new THREE.BoxGeometry(.46,.46,.46),headMat);head.position.y=1.5;group.add(head);
+ const tag=factionTag(over?'Cedar · Overworld':'Cinder · Nether',over?'#b6f27a':'#ff8a3a');group.add(tag);
+ group.position.set(x,y,z);scene.add(group);
+ return {kind,name:over?'Cedar':'Cinder',group,tag,bodyMat,headMat,x,y,z,gifted:false,line:''};
+}
+function buildFactions(){
+ clearFaction();
+ const ow=campAnchor(1),ne=campAnchor(-1);
+ const of=campFloorAt(ow.x,ow.z),nf=campFloorAt(ne.x,ne.z);
+ paintCamp(ow.x,ow.z,of,VERDANT,VERDANT,OW_BANNER);
+ paintCamp(ne.x,ne.z,nf,NETHERRACK,NBRICK,NE_BANNER);
+ factionCamps=[
+  {id:'overworld',x:ow.x,z:ow.z,floor:of,block:VERDANT,banner:OW_BANNER},
+  {id:'nether',x:ne.x,z:ne.z,floor:nf,block:NETHERRACK,banner:NE_BANNER}
+ ];
+ factionNpcs.push(makeFactionNpc('overworld',ow.x+.5,of+1,ow.z+.5));
+ factionNpcs.push(makeFactionNpc('nether',ne.x+.5,nf+1,ne.z+.5));
+ for(const n of factionNpcs)n.tag.quaternion.copy(camera.quaternion);
+}
+function nearestFaction(){
+ let best=null,bd=3.4*3.4;
+ for(const n of factionNpcs){
+  if(!n.group||!n.group.visible)continue;
+  const dx=P.pos.x-n.x,dz=P.pos.z-n.z,dy=(P.pos.y+.9)-n.y,d=dx*dx+dz*dz;
+  if(d<bd&&Math.abs(dy)<3.2){bd=d;best=n}
+ }
+ return best;
+}
+function updateFactionUi(){
+ const n=nearestFaction();
+ document.body.classList.toggle('near-faction',!!(n&&state==='play'&&!verityChatOpen));
+ for(const npc of factionNpcs)if(npc.tag)npc.tag.quaternion.copy(camera.quaternion);
+}
+function talkFaction(){
+ const n=nearestFaction();
+ if(!n){toast('向东找绿色 Overworld，向西找红色 Nether，靠近后按 G');return false}
+ const over=n.kind==='overworld';
+ if(!n.gifted){
+  n.gifted=true;
+  if(over){addItem(VERDANT,16);addItem(SUN_BADGE,1);n.line='Overworld welcomes you. Take this sun badge and verdant blocks.'}
+  else{addItem(NETHERRACK,16);addItem(EMBER_BADGE,1);n.line='Nether welcomes you. Take this ember badge and netherrack.'}
+ }else n.line=over?'The Overworld camp is yours. Place verdant blocks and banners.':'The Nether camp keeps its red stone. The sky stays blue.';
+ const say=$('factionSay');
+ if(say){say.textContent=n.name+': '+n.line;say.style.display='block';say.style.borderColor=over?'#7dcf45':'#ff6a1a'}
+ return n.line;
+}
+function factionInfo(){
+ const pack=id=>{const c=factionCamps.find(s=>s.id===id);const n=factionNpcs.find(s=>s.kind===id);return c&&n?{x:c.x,z:c.z,floor:c.floor,block:c.block,banner:c.banner,name:n.name,nx:n.x,ny:n.y,nz:n.z,gifted:n.gifted,body:n.bodyMat.color.getHex(),head:n.headMat.color.getHex()}:null};
+ return {overworld:pack('overworld'),nether:pack('nether'),camps:factionCamps.length,npcs:factionNpcs.length};
+}
 
 // ================= loop =================
 let last=performance.now(),frames=0,stopAt=Infinity,fpsT=0,fpsN=0,fps=0;
@@ -1625,7 +1749,7 @@ function frame(now){frames++;if(frames>=stopAt)return;requestAnimationFrame(fram
  const dt=Math.min(.05,Math.max(0,(now-last)/1000));last=now;
  if(gen){try{stepGen()}catch(err){gen=null;const ov=$('genOv');if(ov)ov.classList.add('hidden');toast('世界生成失败：'+(err&&err.message||err));state='menu'}}
  else{try{stepTransform()}catch(err){xform=null;toast('变换失败：'+(err&&err.message||err))}try{stepBuild()}catch(err){buildJob=null;toast('建造失败：'+(err&&err.message||err))}updateLapUI();
- if(state==='play'){update(dt);updZombies(dt);updNpcs(dt);updWGolems(dt);updCreepers(dt);updDrops(dt);updAttract(dt);updParts(dt);updDongfeng(dt)}else if(state==='dead'){updParts(dt)} if(!gen)updVerity(dt)}
+ if(state==='play'){update(dt);updZombies(dt);updNpcs(dt);updWGolems(dt);updCreepers(dt);updDrops(dt);updAttract(dt);updParts(dt);updDongfeng(dt)}else if(state==='dead'){updParts(dt)} if(!gen){updVerity(dt);updateFactionUi()}}
  clouds.position.x+=dt*.8;if(clouds.position.x>80)clouds.position.x=-60;
  updCamera(dt);sunMesh.position.copy(camera.position).add(new THREE.Vector3(-60,90,-40));sunMesh.lookAt(camera.position);
  updChunks(meshBoost>0?(touchMode?3:8):undefined);if(meshBoost>0)meshBoost--;
@@ -1639,7 +1763,7 @@ if(touchMode)enableTouch();newWorld();$('hud').style.display='none';requestAnima
 function bgInfo(){const hemi=scene.children.find(o=>o.isHemisphereLight),dir=scene.children.find(o=>o.isDirectionalLight);return {sky:SKY.getHex(),water:WATERFOG.getHex(),cave:CAVEFOG.getHex(),bg:scene.background.getHex(),fog:scene.fog.color.getHex(),hemiSky:hemi?hemi.color.getHex():null,hemiGround:hemi?hemi.groundColor.getHex():null,hemiInt:hemi?hemi.intensity:null,dirColor:dir?dir.color.getHex():null,dirInt:dir?dir.intensity:null}}
 // tiny debug hook (used for automated testing)
 window.__mc={startPlay,state:()=>state,P,zombies,npcs,wGolems,creepers,drops,villages:()=>villages,stats,get,setBlock,doBreak,doPlace,fireMissile,fireDongfeng,detonateDongfeng,select,spawnZombie,makeNpc,makeZombie,makeWGolem,makeCreeper,explodeCreeper,hitWGolem,hitCreeper,openCraft,craft,RECIPES,count,addItem,inv:()=>inv,triggerAttract,inAttractCube,flyBlocks,ATTRACT_SIDE,ATTRACT_HALF,attractCd:()=>attractCd,attractFlash:()=>attractFlash,setAttractCd:v=>{attractCd=v},clearFlyBlocks,
- atk:()=>atkMult,baseDmg:()=>baseDmg,playerDmg,golemCount,golemKills:()=>golemKills,golemDeaths:()=>golemDeaths,kills:()=>kills,colTop,SX,SZ,VIEW:()=>VIEW,touchMode:()=>touchMode,enableTouch,joy:()=>joy,applyQuality,unlockAudio,stopAfter:n=>{stopAt=frames+n},clearZombies:()=>{while(zombies.length)removeZombie(zombies[0]);zTimer=999},clearCreepers:()=>{while(creepers.length)removeCreeper(creepers[0]);cTimer=999},setGameTime:t=>{gameTime=t},fps:()=>fps,setNoLock:()=>{noLock=true},chunksBuilt:()=>chunks.filter(c=>c.built).length,controlMode:()=>controlMode,setControlMode:on=>{controlMode=!!on;syncModeUI()},creative:()=>creative,setCreative,flying:()=>flying,setFlying,openSub2,closeSub2,sub2Open:()=>sub2Open,worldWrecked:()=>worldWrecked,blockCount:()=>{let n=0;for(let i=0;i<world.length;i++)if(world[i])n++;return n},ids:{STICK,PLANKS,LOG,COAL_I,TORCH,IRON,IRON_INGOT,IRON_SWORD,WOOD_PICK,STONE_PICK,COBBLE,TABLE,FURNACE,MISSILE,DF_MISSILE,SAND,DIAMOND,DIAMOND_I,DBLK,GLASS,AIR,BEDROCK},diamonds:()=>diamonds,SY,DBLK,GLASS,AIR,BEDROCK,DIAMOND,nearLaptop,laptopPos:()=>laptop&&{x:laptop.x,y:laptop.y,z:laptop.z,kind:laptop.kind},buildPos:()=>buildPc&&{x:buildPc.x,y:buildPc.y,z:buildPc.z,kind:buildPc.kind,visible:!!(buildPc.mesh&&buildPc.mesh.visible)},interact,chooseLaptop,chooseBuild,openLaptop,openBuild,closeLaptop,closeBuild,nearestKind:()=>{const c=nearestComputer();return c?c.kind:null},xformActive:()=>!!xform,buildActive:()=>!!buildJob,finishTransform,finishBuild,buildReport,worldChecksum,genReady:()=>!gen,stepGen,standColumn,buildChunk,chunkIndexCount,updateLapUI,overlapsPlayer,worldBytes:()=>world.byteLength,auditBlocks,wipeWorld,newWorld,bgInfo,keys:()=>keys,verity:()=>verity&&{x:verity.pos.x,y:verity.pos.y,z:verity.pos.z,hp:verity.hp,carried:!!verity.carried,line:verity.line},hitVerity,toggleCarry,dropVerity,openVerityChat,closeVerityChat,sendVerityChat,verityReply,nearVerity,rayHitsVerity,syncVerityHud,updVerity,chatOpen:()=>verityChatOpen,LAP_REACH,BD};
+ atk:()=>atkMult,baseDmg:()=>baseDmg,playerDmg,golemCount,golemKills:()=>golemKills,golemDeaths:()=>golemDeaths,kills:()=>kills,colTop,SX,SZ,VIEW:()=>VIEW,touchMode:()=>touchMode,enableTouch,joy:()=>joy,applyQuality,unlockAudio,stopAfter:n=>{stopAt=frames+n},clearZombies:()=>{while(zombies.length)removeZombie(zombies[0]);zTimer=999},clearCreepers:()=>{while(creepers.length)removeCreeper(creepers[0]);cTimer=999},setGameTime:t=>{gameTime=t},fps:()=>fps,setNoLock:()=>{noLock=true},chunksBuilt:()=>chunks.filter(c=>c.built).length,controlMode:()=>controlMode,setControlMode:on=>{controlMode=!!on;syncModeUI()},creative:()=>creative,setCreative,flying:()=>flying,setFlying,openSub2,closeSub2,sub2Open:()=>sub2Open,worldWrecked:()=>worldWrecked,blockCount:()=>{let n=0;for(let i=0;i<world.length;i++)if(world[i])n++;return n},ids:{STICK,PLANKS,LOG,COAL_I,TORCH,IRON,IRON_INGOT,IRON_SWORD,WOOD_PICK,STONE_PICK,COBBLE,TABLE,FURNACE,MISSILE,DF_MISSILE,SAND,DIAMOND,DIAMOND_I,DBLK,GLASS,AIR,BEDROCK,VERDANT,OW_BANNER,NETHERRACK,NBRICK,NE_BANNER,SUN_BADGE,EMBER_BADGE},diamonds:()=>diamonds,SY,DBLK,GLASS,AIR,BEDROCK,DIAMOND,nearLaptop,laptopPos:()=>laptop&&{x:laptop.x,y:laptop.y,z:laptop.z,kind:laptop.kind},buildPos:()=>buildPc&&{x:buildPc.x,y:buildPc.y,z:buildPc.z,kind:buildPc.kind,visible:!!(buildPc.mesh&&buildPc.mesh.visible)},interact,chooseLaptop,chooseBuild,openLaptop,openBuild,closeLaptop,closeBuild,nearestKind:()=>{const c=nearestComputer();return c?c.kind:null},xformActive:()=>!!xform,buildActive:()=>!!buildJob,finishTransform,finishBuild,buildReport,worldChecksum,genReady:()=>!gen,stepGen,standColumn,buildChunk,chunkIndexCount,updateLapUI,overlapsPlayer,worldBytes:()=>world.byteLength,auditBlocks,wipeWorld,newWorld,bgInfo,keys:()=>keys,talkFaction,factionInfo,VERDANT,NETHERRACK,OW_BANNER,NE_BANNER,NBRICK,SUN_BADGE,EMBER_BADGE,verity:()=>verity&&{x:verity.pos.x,y:verity.pos.y,z:verity.pos.z,hp:verity.hp,carried:!!verity.carried,line:verity.line},hitVerity,toggleCarry,dropVerity,openVerityChat,closeVerityChat,sendVerityChat,verityReply,nearVerity,rayHitsVerity,syncVerityHud,updVerity,chatOpen:()=>verityChatOpen,LAP_REACH,BD};
 })();
 
 </script>
