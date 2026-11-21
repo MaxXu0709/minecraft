@@ -87,6 +87,9 @@ const result = await page.evaluate(async () => {
   assert(/not a live AI/i.test(panel) && /Verity:/.test(document.getElementById('verityLog').textContent), 'chat is labeled offline and shows the reply')
   const replyZh = mc.verityReply('重力是什么')
   assert(/10/.test(replyZh), 'Chinese gravity reply')
+  const iceReply = mc.verityReply('冰块在哪')
+  assert(/Nether|冰|台阶|掉/.test(iceReply), 'Chinese ice directions '+iceReply)
+  assert(help.includes('冰块') && help.includes('向西'), 'menu has Chinese ice directions')
   const a = mc.verityReply('who are you'), b = mc.verityReply('who are you')
   assert(a!==b, 'repeated questions vary')
   window.dispatchEvent(new KeyboardEvent('keydown', {code:'KeyW', bubbles:true}))
@@ -95,14 +98,25 @@ const result = await page.evaluate(async () => {
   window.dispatchEvent(new KeyboardEvent('keydown', {code:'KeyW', bubbles:true}))
   assert(mc.keys().KeyW, 'movement keys work after chat closes')
   mc.keys().KeyW = false
-  mc.P.pos.set(v0.x, v0.y-1.0, v0.z+1.8)
-  mc.P.yaw = Math.atan2(-(v0.x-mc.P.pos.x), -(v0.z-mc.P.pos.z))
-  mc.P.pitch = -0.25
+  const live = mc.verity()
+  mc.P.vel.set(0,0,0)
+  mc.P.pos.set(live.x, live.y-1.62, live.z+1.45)
+  mc.P.yaw = Math.atan2(-(live.x-mc.P.pos.x), -(live.z-mc.P.pos.z))
+  mc.P.pitch = 0
+  const saved=[]
+  const vy=Math.floor(live.y)
+  for (const [x,z] of [[Math.floor(mc.P.pos.x),Math.floor(mc.P.pos.z)],[Math.floor(live.x),Math.floor((live.z+mc.P.pos.z)/2)],[Math.floor(live.x),Math.floor(live.z)]]){
+    for (const yy of [vy, vy+1]){
+      const b=mc.get(x,yy,z)
+      if (b && b!==mc.BEDROCK){saved.push([x,yy,z,b]); mc.setBlock(x,yy,z,mc.AIR)}
+    }
+  }
   mc.updVerity(0.05)
   assert(mc.rayHitsVerity(), 'raycast reaches Verity')
   const hp1 = mc.hitVerity(1)
   assert(hp1===4 && mc.verity().line==="Ouch, why you hit me?" && document.getElementById('verityBubble').textContent==="Ouch, why you hit me?", 'exact hit line and HP')
   assert(mc.toggleCarry(false)==='carry' && mc.verity().carried, 'raycast pickup')
+  for (const [x,yy,z,b] of saved) mc.setBlock(x,yy,z,b)
   mc.P.pos.x += 12
   mc.updVerity(0.2)
   assert(Math.hypot(mc.verity().x-mc.P.pos.x, mc.verity().z-mc.P.pos.z)<2, 'carried Verity stays with the player')
@@ -139,10 +153,18 @@ const result = await page.evaluate(async () => {
   const ow = fac.overworld, ne = fac.nether
   const sow = {x:ow.x+0.5-home.x, z:ow.z+0.5-home.z}, sne = {x:ne.x+0.5-home.x, z:ne.z+0.5-home.z}
   assert(sow.x*sne.x+sow.z*sne.z<0, 'camps sit on opposite sides of spawn')
+  mc.P.pos.set(home.x, home.y, home.z)
+  mc.talkFaction()
+  const tip=document.getElementById('toast').textContent
+  const zh=(dx,dz)=>Math.abs(dx)>=Math.abs(dz)?(dx>=0?'东':'西'):(dz>=0?'南':'北')
+  assert(tip.includes('向'+zh(sow.x,sow.z)) && tip.includes('向'+zh(sne.x,sne.z)) && tip.includes('冰块'), 'Chinese directions match the camps '+tip)
   assert(Math.hypot(sow.x,sow.z)>14 && Math.hypot(sne.x,sne.z)>14, 'camps are a walk from spawn')
   assert(mc.get(ow.x, ow.floor, ow.z)===mc.VERDANT, 'overworld floor is verdant')
   assert(mc.get(ow.x-4, ow.floor+2, ow.z-4)===mc.OW_BANNER, 'overworld banner post')
-  assert(mc.get(ne.x, ne.floor, ne.z)===mc.NETHERRACK, 'nether floor is netherrack')
+  assert(mc.get(ne.x, ne.floor, ne.z)===mc.ICE, 'nether hatch center is ice')
+  assert(mc.BD[mc.ICE].name==='Ice', 'ice block is named')
+  assert(mc.solidAt(ne.x, ne.floor, ne.z)===false, 'ice at the hatch is not solid')
+  assert(mc.get(ne.x+4, ne.floor, ne.z)===mc.NETHERRACK, 'outer nether floor stays netherrack')
   assert(mc.get(ne.x+1, ne.floor+1, ne.z)===mc.NBRICK || mc.get(ne.x+3, ne.floor+1, ne.z)===mc.NBRICK, 'nether brick wall')
   assert(mc.get(ne.x-4, ne.floor+2, ne.z-4)===mc.NE_BANNER, 'nether banner post')
   const cg=(ow.body>>8)&255, cr=ow.body>>16&255
@@ -166,6 +188,66 @@ const result = await page.evaluate(async () => {
   assert(document.getElementById('factionSay').textContent.startsWith('Cinder: Nether welcomes you'), 'Cinder greeting')
   assert(mc.count(mc.EMBER_BADGE)===1 && mc.count(mc.NETHERRACK)>=16, 'nether reward in inventory')
   document.body.classList.remove('touch')
+  const ice=ne.ice, land=ne.landing, stair=ne.stair
+  assert(ice && land && stair && ice.y===ne.floor && land.y===ne.floor-7 && land.y>=5, 'seven-block drop onto a landing above the void')
+  let iceN=0
+  for(let dz=-2;dz<=2;dz++)for(let dx=-2;dx<=2;dx++) if(mc.get(ne.x+dx, ne.floor, ne.z+dz)===mc.ICE && mc.solidAt(ne.x+dx, ne.floor, ne.z+dz)===false) iceN++
+  assert(iceN===25, '5x5 pass-through ice hatch '+iceN)
+  assert(mc.get(ne.x+3, ne.floor, ne.z)===mc.NBRICK, 'nether brick frames the ice')
+  assert(mc.get(land.x, land.y, land.z)===mc.NETHERRACK && mc.solidAt(land.x, land.y, land.z), 'solid netherrack landing')
+  let gap=0
+  for(let y=land.y+1;y<ne.floor;y++) if(mc.get(ice.x,y,ice.z)===mc.AIR) gap++
+  assert(gap>=5 && gap>mc.P.h, 'chamber headroom '+gap)
+  assert(ne.ny<ne.floor && Math.abs(ne.ny-(land.y+1))<0.05, 'Cinder stands on the underground floor')
+  const wallX=ne.x-(stair.dx||0)*4, wallZ=ne.z-(stair.dz||0)*4
+  assert(mc.get(wallX, land.y+2, wallZ)===mc.NBRICK, 'chamber wall opposite the stairs is nether brick')
+  assert(mc.get(ne.x+stair.dx*4, land.y+1, ne.z+stair.dz*4)===mc.AIR && mc.solidAt(ne.x+stair.dx*4, land.y, ne.z+stair.dz*4), 'stair door is open above a solid step')
+  assert(mc.get(ne.x+stair.dx*(4+stair.steps), ne.floor, ne.z+stair.dz*(4+stair.steps))===mc.NETHERRACK, 'stairs reach the surface')
+  assert(mc.get(ne.x+stair.dx*stair.end, ne.floor+1, ne.z+stair.dz*stair.end)===mc.AIR && mc.solidAt(ne.x+stair.dx*stair.end, ne.floor, ne.z+stair.dz*stair.end), 'exit porch is walkable')
+  const marker=mc.get(400,8,800), dims=[mc.SX,mc.SY,mc.SZ]
+  mc.setCreative(false)
+  mc.P.hp=10
+  mc.P.vel.set(0,0,0)
+  for (const k of ['KeyW','KeyA','KeyS','KeyD','Space','ShiftLeft']) mc.keys()[k]=false
+  mc.joy().x=0; mc.joy().y=0
+  mc.P.pos.set(ne.x-2.5, ne.floor+1, ne.z+0.5)
+  mc.P.yaw=Math.atan2(-(ne.x+0.5-mc.P.pos.x), -(ne.z+0.5-mc.P.pos.z))
+  mc.joy().y=1
+  let minY=mc.P.pos.y, landed=false
+  for(let i=0;i<240 && !landed;i++){
+    mc.update(1/30)
+    if(mc.P.pos.y<minY) minY=mc.P.pos.y
+    if(mc.P.pos.y<ne.floor-0.2){mc.joy().y=0; mc.P.vel.x=0; mc.P.vel.z=0}
+    if(mc.P.onGround && mc.P.pos.y<ne.floor-2) landed=true
+  }
+  mc.joy().y=0
+  out.fall={x:mc.P.pos.x,y:mc.P.pos.y,z:mc.P.pos.z,minY,hp:mc.P.hp,on:mc.P.onGround,landed}
+  assert(landed && mc.P.onGround, 'joystick walk onto ice lands in the room')
+  assert(Math.abs(mc.P.pos.y-(land.y+1))<0.3, 'feet rest on the landing '+mc.P.pos.y)
+  assert(mc.P.hp===10 && minY>0, 'fall does not remove hearts, lowest '+minY)
+  assert(Math.hypot(mc.P.pos.x-(ne.x+0.5), mc.P.pos.z-(ne.z+0.5))<4, 'landing stays inside the camp room')
+  assert(mc.SX===dims[0] && mc.SY===dims[1] && mc.SZ===dims[2] && mc.get(400,8,800)===marker, 'same world after falling through ice')
+  mc.P.pos.set(ne.x+0.5, land.y+1, ne.z+0.5)
+  mc.P.vel.set(0,0,0)
+  mc.P.yaw=Math.atan2(-stair.dx, -stair.dz)
+  mc.keys().KeyW=true
+  let climbed=false, climbY=mc.P.pos.y
+  for(let i=0;i<700;i++){
+    mc.update(1/30)
+    if(mc.P.pos.y>climbY) climbY=mc.P.pos.y
+    const prog=(mc.P.pos.x-(ne.x+0.5))*stair.dx+(mc.P.pos.z-(ne.z+0.5))*stair.dz
+    if(mc.P.onGround && mc.P.pos.y>=ne.floor+0.85 && prog>=4+stair.steps-0.4){climbed=true; break}
+  }
+  mc.keys().KeyW=false
+  out.climb={x:mc.P.pos.x,y:mc.P.pos.y,z:mc.P.pos.z,hp:mc.P.hp,on:mc.P.onGround,climbed,climbY}
+  assert(climbed, 'walked up the return stairs '+JSON.stringify(out.climb))
+  assert(mc.P.hp===10, 'leaving the room does not cost hearts')
+  out.ice={x:ice.x,y:ice.y,z:ice.z}
+  out.stairBlock={x:ne.x+stair.dx*6,y:land.y+2,z:ne.z+stair.dz*6}
+  out.entry={
+    dx:ice.x+0.5-home.x, dy:ice.y-home.y, dz:ice.z+0.5-home.z,
+    floor:ne.floor, landing:land.y, stair, cinder:{x:ne.nx,y:ne.ny,z:ne.nz}
+  }
   mc.P.pos.set(home.x, home.y, home.z)
   out.owBlock={x:ow.x-4,y:ow.floor+2,z:ow.z-4}
   out.neBlock={x:ne.x-4,y:ne.floor+2,z:ne.z-4}
@@ -279,6 +361,15 @@ const result = await page.evaluate(async () => {
   let campHit=0
   for(const s of sites) for(const c of camps) if(Math.hypot(s.x-c.x,s.z-c.z)<12) campHit++
   assert(campHit===0, 'building computer leaves faction camps alone')
+  const st=out.factions.nether.stair, nec=out.factions.nether
+  let nearPit=0
+  const endx=nec.x+0.5+st.dx*st.end, endz=nec.z+0.5+st.dz*st.end
+  for(const s of sites){
+    if(Math.hypot(s.x+0.5-(nec.x+0.5), s.z+0.5-(nec.z+0.5))<18) nearPit++
+    if(Math.hypot(s.x+0.5-endx, s.z+0.5-endz)<6) nearPit++
+  }
+  assert(nearPit===0, 'buildings stay clear of the ice room and stair exit')
+  assert(mc.get(nec.ice.x, nec.ice.y, nec.ice.z)===mc.ICE, 'buildings leave the ice hatch in place')
   assert(mc.worldChecksum()!==sum0, 'yes changed the world')
 
   const n1 = rep1.count
@@ -345,6 +436,16 @@ const result = await page.evaluate(async () => {
   assert(mc.get(foot.x, foot.y, foot.z)===mc.DBLK, 'ground under feet became diamond block')
   assert(mc.get(out.owBlock.x,out.owBlock.y,out.owBlock.z)===mc.DBLK, 'overworld camp becomes diamond blocks')
   assert(mc.get(out.neBlock.x,out.neBlock.y,out.neBlock.z)===mc.DBLK, 'nether camp becomes diamond blocks')
+  assert(mc.get(out.ice.x,out.ice.y,out.ice.z)===mc.DBLK && mc.solidAt(out.ice.x,out.ice.y,out.ice.z), 'ice converts to a solid diamond block')
+  assert(mc.get(out.stairBlock.x,out.stairBlock.y,out.stairBlock.z)===mc.DBLK && mc.solidAt(out.stairBlock.x,out.stairBlock.y,out.stairBlock.z), 'return stairs convert and stay solid')
+  mc.setCreative(false)
+  mc.P.vel.set(0,0,0)
+  mc.P.pos.set(out.ice.x+0.5, out.ice.y+1, out.ice.z+0.5)
+  for(const k of ['KeyW','KeyA','KeyS','KeyD','Space']) mc.keys()[k]=false
+  mc.joy().y=0
+  for(let i=0;i<45;i++) mc.update(1/30)
+  assert(mc.P.onGround && mc.P.pos.y>out.ice.y+0.8, 'converted hatch holds the player '+mc.P.pos.y)
+  mc.P.pos.set(spawn.x, spawn.y, spawn.z)
   const auditD = mc.auditBlocks(mc.DBLK)
   assert(auditD.other===0 && auditD.match+auditD.air===auditD.n && auditD.air>0 && auditD.match>1000000, 'full map non-air is diamond block '+JSON.stringify(auditD))
   out.auditDiamond = auditD
@@ -366,6 +467,8 @@ const result = await page.evaluate(async () => {
   assert(mc.get(0,0,0)===mc.GLASS && mc.get(mc.SX-1,0,mc.SZ-1)===mc.GLASS, 'corners are glass')
   assert(mc.get(1,39,1)===mc.AIR && mc.get(body.x, body.y, body.z)===mc.AIR, 'air remains through glass pass')
   assert(mc.get(foot.x, foot.y, foot.z)===mc.GLASS, 'feet ground is glass')
+  assert(mc.get(out.ice.x,out.ice.y,out.ice.z)===mc.GLASS && mc.solidAt(out.ice.x,out.ice.y,out.ice.z), 'former ice is solid glass, not a hole')
+  assert(mc.solidAt(out.stairBlock.x,out.stairBlock.y,out.stairBlock.z), 'glass stairs still collide')
   const auditG = mc.auditBlocks(mc.GLASS)
   assert(auditG.other===0 && auditG.air===auditD.air && auditG.match===auditD.match, 'full map non-air is glass and air count held '+JSON.stringify(auditG))
   out.auditGlass = auditG
@@ -402,6 +505,8 @@ const result = await page.evaluate(async () => {
   assert(mc.BD[mc.GLASS].tr===true && mc.BD[mc.DBLK].tr===false, 'materials unchanged')
   assert(mc.laptopPos(), 'laptop mesh remains')
   mc.wipeWorld()
+  assert(mc.get(out.ice.x,out.ice.y,out.ice.z)===mc.AIR, 'wipe removes the ice hatch')
+  assert(!mc.factionInfo().nether && !mc.factionInfo().overworld, 'wipe removes both camps')
   assert(mc.worldWrecked() && mc.buildPos() && mc.buildPos().visible===false, 'wipe hides the build computer')
   assert(mc.verity() && mc.verity().hp===5 && Math.hypot(mc.verity().x-mc.P.pos.x, mc.verity().z-mc.P.pos.z)<3, 'Verity returns beside the player after the world wipe')
   assert(mc.nearestKind()===null, 'neither computer is usable after a world wipe')
@@ -417,7 +522,8 @@ const result = await page.evaluate(async () => {
   assert(mc.buildReport().count===0, 'construction list resets with the world')
   assert(mc.verity() && mc.verity().line==="Hi, I'm Verity" && Math.hypot(mc.verity().x-mc.P.pos.x, mc.verity().z-mc.P.pos.z)<3, 'new world greets with Verity beside the player')
   const fac2=mc.factionInfo()
-  assert(fac2.overworld && fac2.nether && mc.get(fac2.overworld.x,fac2.overworld.floor,fac2.overworld.z)===mc.VERDANT && mc.get(fac2.nether.x,fac2.nether.floor,fac2.nether.z)===mc.NETHERRACK, 'new world rebuilds both faction camps')
+  assert(fac2.overworld && fac2.nether && mc.get(fac2.overworld.x,fac2.overworld.floor,fac2.overworld.z)===mc.VERDANT && mc.get(fac2.nether.x,fac2.nether.floor,fac2.nether.z)===mc.ICE, 'new world rebuilds both camps and the ice hatch')
+  assert(fac2.nether.landing && mc.get(fac2.nether.landing.x,fac2.nether.landing.y,fac2.nether.landing.z)===mc.NETHERRACK && mc.solidAt(fac2.nether.ice.x,fac2.nether.ice.y,fac2.nether.ice.z)===false, 'new world landing is solid and the new ice is passable')
   assert(mc.SX===512 && mc.SY===40 && mc.SZ===1024, 'map size unchanged')
   out.spawn = spawn
   out.laptop = L
@@ -491,6 +597,31 @@ await page.evaluate(async () => {
   for (let i=0;i<5;i++) await new Promise(r => requestAnimationFrame(r))
 })
 await page.screenshot({path: shots+'/nether-camp.png'})
+await page.evaluate(async () => {
+  const mc = window.__mc
+  mc.closeVerityChat()
+  mc.startPlay()
+  mc.setNoLock()
+  const f = mc.factionInfo().nether
+  mc.P.pos.set(f.x+0.5, f.floor+3.2, f.z+2.6)
+  mc.P.yaw = Math.atan2(-(f.x+0.5-mc.P.pos.x), -(f.z+0.5-mc.P.pos.z))
+  mc.P.pitch = -1.15
+  mc.P.vel.set(0,0,0)
+  for (let i=0;i<8;i++) await new Promise(r => requestAnimationFrame(r))
+})
+await page.screenshot({path: shots+'/ice-hatch.png'})
+await page.evaluate(async () => {
+  const mc = window.__mc
+  mc.startPlay()
+  mc.setNoLock()
+  const f = mc.factionInfo().nether
+  mc.P.pos.set(f.landing.x+0.5, f.landing.y+1, f.landing.z+2.2)
+  mc.P.yaw = Math.atan2(-(f.nx-mc.P.pos.x), -(f.nz-mc.P.pos.z))
+  mc.P.pitch = -0.05
+  mc.P.vel.set(0,0,0)
+  for (let i=0;i<8;i++) await new Promise(r => requestAnimationFrame(r))
+})
+await page.screenshot({path: shots+'/nether-chamber.png'})
 
 const src = readFileSync('/workspace/index.html', 'utf8')
 const srcFails = []

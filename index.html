@@ -169,7 +169,7 @@ body.touch.near-lap #btnUse{display:block}
   &bull; <b>Phone &amp; tablet:</b> left joystick to move, drag the right half of the screen to look, on-screen <b>Jump</b>, hold <b>Mine / Attack</b>, <b>Place</b>, <b>Craft</b>, tap the hotbar, <b>New World</b>. Near the laptop, <b>使用电脑</b> / Craft opens it<br>
   &bull; <b>更大更长的陆地：</b>地图 <b>512×1024</b>（高 40，原来是 256×256）。出生点北面并排两台电脑：左边<b>材质</b>（青色，是＝钻石块，否＝玻璃块），右边<b>建造</b>（橙色，是＝在各地盖房屋、塔、大厅和小教堂，否＝不改地形）。靠近后按 <b>E</b>，离得近的那一台生效。手机点对应的使用按钮。走开再按 E 仍是合成<br>
   &bull; <b>Verity</b> is the yellow ball beside you, not a white orb. She says <b>Hi, I'm Verity</b>. Press <b>T</b> to chat (saved replies, not a live AI). Look at her and press <b>F</b> to carry her, then <b>F</b> to put her down. On a phone, tap <b>交谈</b> and <b>抱起</b>. Hitting her says <b>Ouch, why you hit me?</b><br>
-  &bull; <b>Factions, same map:</b> walk <b>east</b> to the green <b>Overworld</b> camp (Cedar) and <b>west</b> to the red <b>Nether</b> camp (Cinder). Press <b>G</b> or tap <b>阵营</b>. They give a badge and themed blocks. The sky does not change.<br>
+  &bull; <b>Factions, same map:</b> the green <b>Overworld</b> camp (Cedar) and the red <b>Nether</b> camp sit on opposite sides of spawn, usually <b>east</b> and <b>west</b>. The ready-world message names the real direction. The pale <b>ice</b> in the red floor can be walked on and fallen through into the room below. Climb the netherrack stairs back out. Press <b>G</b> or tap <b>阵营</b> beside Cedar or Cinder. The sky does not change. <b>中文：</b>世界准备好时，提示会写出方向（一般向东绿色、向西红色）。走到浅色<b>冰块</b>上会掉进同一张地图的地下房间，再沿台阶走上来。<br>
   &bull; Explore a huge world: <b>caves</b>, <b>mineshafts</b> with torches, ores, and <b>villages</b> with friendly wandering villagers (they never attack)<br>
   &bull; <b>Zombies</b> hunt you and iron golems — a zombie kills a golem in one hit<br>
   &bull; <b>Iron golems</b> smash zombies in <b>one hit</b>, and <b>never attack you</b> unless <b>开始操纵</b> is on (then they chase and punch for 2 hearts). One hit from you destroys a golem… and <b>two new golems</b> rise in its place!<br>
@@ -222,12 +222,12 @@ function dprCap(){return Math.min(devicePixelRatio||1,touchMode?1.5:2)}
 const $=id=>document.getElementById(id);
 const rnd=n=>Math.floor(Math.random()*n),clamp=v=>Math.max(0,Math.min(255,v|0));
 // ================= blocks & items =================
-const AIR=0,GRASS=1,DIRT=2,STONE=3,SAND=4,WATER=5,LOG=6,LEAVES=7,PLANKS=8,COBBLE=9,COAL=10,IRON=11,GOLD=12,DIAMOND=13,GLASS=14,BEDROCK=15,BRICK=16,GRAVEL=17,DOOR_LOW=18,DOOR_TOP=19,FARMLAND=20,WHEAT=21,TABLE=22,FURNACE=23,TORCH=24,DBLK=25,VERDANT=26,OW_BANNER=27,NETHERRACK=28,NBRICK=29,NE_BANNER=30;
+const AIR=0,GRASS=1,DIRT=2,STONE=3,SAND=4,WATER=5,LOG=6,LEAVES=7,PLANKS=8,COBBLE=9,COAL=10,IRON=11,GOLD=12,DIAMOND=13,GLASS=14,BEDROCK=15,BRICK=16,GRAVEL=17,DOOR_LOW=18,DOOR_TOP=19,FARMLAND=20,WHEAT=21,TABLE=22,FURNACE=23,TORCH=24,DBLK=25,VERDANT=26,OW_BANNER=27,NETHERRACK=28,NBRICK=29,NE_BANNER=30,ICE=31;
 const STICK=100,COAL_I=101,IRON_INGOT=102,DIAMOND_I=103,WOOD_SWORD=110,STONE_SWORD=111,IRON_SWORD=112,WOOD_PICK=113,STONE_PICK=114,MISSILE=115,DF_MISSILE=116,SUN_BADGE=120,EMBER_BADGE=121;
-const NOSOLID=new Set([AIR,WATER,DOOR_LOW,DOOR_TOP,WHEAT,TORCH]);
+const NOSOLID=new Set([AIR,WATER,DOOR_LOW,DOOR_TOP,WHEAT,TORCH,ICE]);
 const HARD=new Set([STONE,COBBLE,COAL,IRON,GOLD,DIAMOND,BRICK,FURNACE,DBLK]);
-const T={grassTop:0,grassSide:1,dirt:2,stone:3,sand:4,water:5,logSide:6,logTop:7,leaves:8,planks:9,cobble:10,coal:11,iron:12,gold:13,diamond:14,glass:15,bedrock:16,brick:17,gravel:18,doorLow:19,doorTop:20,farmland:21,wheat:22,tableTop:23,tableSide:24,furnaceSide:25,furnaceFront:26,torch:27,dblock:28,verdant:29,owBanner:30,netherrack:31,nbrick:32,neBanner:33};
-const NT=34;
+const T={grassTop:0,grassSide:1,dirt:2,stone:3,sand:4,water:5,logSide:6,logTop:7,leaves:8,planks:9,cobble:10,coal:11,iron:12,gold:13,diamond:14,glass:15,bedrock:16,brick:17,gravel:18,doorLow:19,doorTop:20,farmland:21,wheat:22,tableTop:23,tableSide:24,furnaceSide:25,furnaceFront:26,torch:27,dblock:28,verdant:29,owBanner:30,netherrack:31,nbrick:32,neBanner:33,ice:34};
+const NT=35;
 const BD=[];
 function def(id,name,side,top,bottom,tr,drop){BD[id]={name,t:[side,top==null?side:top,bottom==null?(top==null?side:top):bottom],tr:!!tr,drop:drop===undefined?id:drop}}
 def(AIR,'Air',0,0,0,true,0);def(GRASS,'Grass Block',T.grassSide,T.grassTop,T.dirt,false,DIRT);def(DIRT,'Dirt',T.dirt);def(STONE,'Stone',T.stone,null,null,false,COBBLE);
@@ -237,7 +237,7 @@ def(DIAMOND,'Diamond Ore',T.diamond,null,null,false,DIAMOND_I);def(GLASS,'Glass'
 def(GRAVEL,'Gravel Path',T.gravel);def(DOOR_LOW,'Oak Door',T.doorLow,T.planks,T.planks,true);def(DOOR_TOP,'Oak Door',T.doorTop,T.planks,T.planks,true,DOOR_LOW);
 def(FARMLAND,'Farmland',T.dirt,T.farmland,T.dirt,false,DIRT);def(WHEAT,'Wheat',T.wheat,T.wheat,T.wheat,true,0);
 def(TABLE,'Crafting Table',T.tableSide,T.tableTop,T.planks);def(FURNACE,'Furnace',T.furnaceFront,T.furnaceSide,T.furnaceSide);def(TORCH,'Torch',T.torch,null,null,true);def(DBLK,'Diamond Block',T.dblock);
-def(VERDANT,'Verdant Block',T.verdant);def(OW_BANNER,'Overworld Banner',T.owBanner);def(NETHERRACK,'Netherrack',T.netherrack);def(NBRICK,'Nether Brick',T.nbrick);def(NE_BANNER,'Nether Banner',T.neBanner);
+def(VERDANT,'Verdant Block',T.verdant);def(OW_BANNER,'Overworld Banner',T.owBanner);def(NETHERRACK,'Netherrack',T.netherrack);def(NBRICK,'Nether Brick',T.nbrick);def(NE_BANNER,'Nether Banner',T.neBanner);def(ICE,'Ice',T.ice);
 // ================= textures =================
 function px(c,x,y,r,g,b,a){c.fillStyle=`rgba(${clamp(r)},${clamp(g)},${clamp(b)},${a==null?1:a})`;c.fillRect(x,y,1,1)}
 function noise(c,[r,g,b],v,y0=0,y1=16,x0=0,x1=16){for(let i=x0;i<x1;i++)for(let j=y0;j<y1;j++){const d=(Math.random()-.5)*v;px(c,i,j,r+d,g+d,b+d)}}
@@ -277,7 +277,8 @@ const TILE_DRAW=[
  c=>{c.fillStyle='#146b32';c.fillRect(0,0,16,16);c.fillStyle='#f0c53a';c.fillRect(6,0,4,16);c.fillStyle='#e8f7c8';c.fillRect(2,3,2,2);c.fillRect(12,10,2,2)},
  c=>{c.fillStyle='#6a2018';c.fillRect(0,0,16,16);for(let k=0;k<18;k++){const x=rnd(15),y=rnd(15);c.fillStyle=k%2?'#a33a28':'#3a100e';c.fillRect(x,y,2,2)}},
  c=>{c.fillStyle='#4a1218';c.fillRect(0,0,16,16);c.fillStyle='#7a2430';for(let row=0;row<4;row++){const off=row%2?4:0;for(let b=0;b<3;b++)c.fillRect(off+b*6,row*4,5,3)}},
- c=>{c.fillStyle='#2a0a0c';c.fillRect(0,0,16,16);c.fillStyle='#ff6a1a';c.fillRect(6,0,4,16);c.fillStyle='#ffb020';c.fillRect(2,4,2,2);c.fillRect(12,10,2,2)}
+ c=>{c.fillStyle='#2a0a0c';c.fillRect(0,0,16,16);c.fillStyle='#ff6a1a';c.fillRect(6,0,4,16);c.fillStyle='#ffb020';c.fillRect(2,4,2,2);c.fillRect(12,10,2,2)},
+ c=>{c.fillStyle='#d7f4ff';c.fillRect(0,0,16,16);c.fillStyle='#9fd8f2';c.fillRect(0,0,16,2);c.fillRect(0,14,16,2);c.fillRect(0,0,2,16);c.fillRect(14,0,2,16);c.fillStyle='#ffffff';c.fillRect(3,3,4,3);c.fillStyle='#6eb8d8';c.fillRect(8,8,5,2)}
 ];
 if(TILE_DRAW.length!==NT)throw new Error('tiles '+TILE_DRAW.length+'!='+NT);
 const tiles=TILE_DRAW.map(fn=>{const cv=document.createElement('canvas');cv.width=cv.height=16;fn(cv.getContext('2d'));return cv});
@@ -1206,7 +1207,7 @@ function blockedPoint(x,z,min){
  const pts=[[spawn.x,spawn.z,18]];
  if(laptop)pts.push([laptop.x,laptop.z,12]);
  if(buildPc)pts.push([buildPc.x,buildPc.z,12]);
- for(const c of factionCamps)pts.push([c.x+.5,c.z+.5,20]);
+ for(const c of factionCamps){pts.push([c.x+.5,c.z+.5,20]);if(c.stair){const reach=c.stair.end!=null?c.stair.end:(4+c.stair.steps+1);pts.push([c.x+.5+c.stair.dx*reach,c.z+.5+c.stair.dz*reach,8]);}}
  pts.push([P.pos.x,P.pos.z,10]);
  for(const [px,pz,d] of pts) if(Math.hypot(x-px,z-pz)<Math.max(min||0,d)) return true;
  return false;
@@ -1415,7 +1416,7 @@ function finishWorldSpawn(){
   for(let i=0;i<4;i++)spawnZombie(20);spawnCreeper(22);spawnCreeper(28);
   const wantPlay=playAfterGen;playAfterGen=false;gen=null;
   const ov=$('genOv');if(ov)ov.classList.add('hidden');
-  toast('世界已生成 '+SX+'×'+SZ+'。东边绿营 Overworld，西边红营 Nether。靠近按 G');
+  const dir=campWords();toast('向'+dir.ow+'是绿色主世界营地。向'+dir.ne+'是红色下界营地：走到浅色冰块上会掉进地下，沿台阶走上来。按 G');
   if(wantPlay)startPlay();else if(state==='gen')state='menu';
  }catch(err){gen=null;const ov=$('genOv');if(ov)ov.classList.add('hidden');toast('世界生成失败：'+(err&&err.message||err));state='menu'}
 }
@@ -1468,8 +1469,8 @@ const VERITY_BAGS={
   "请别打我。如果我倒下了，我会在你身边再出现。"
  ],
  faction:[
-  "Walk east to the green Overworld camp and talk to Cedar with G. Walk west to the red Nether camp and talk to Cinder. The sky does not change.",
-  "向东是绿色 Overworld 营地，靠近 Cedar 按 G。向西是红色 Nether 营地，靠近 Cinder 按 G。天空不会变。"
+  "The green Overworld camp and the red Nether camp are on opposite sides of spawn. The message when the world is ready names the direction, usually east and west. Step on the pale ice to fall into the room below. Stairs walk back up. The sky does not change.",
+  "出生提示会写出营地方向，一般是向东绿色、向西红色。红营地面有冰块，走上去会掉进下面的 Nether，顺着台阶走上来。天空不会变。"
  ]
 };
 const VERITY_DEFAULT=[
@@ -1485,7 +1486,7 @@ function verityReply(raw){
  else if(/抱|carry|pick me|放下|drop me|\bf\b/.test(q))key='carry';
  else if(/合成|craft|制作/.test(q))key='craft';
  else if(/地图|多大|512|1024|how big|world size/.test(q))key='map';
- else if(/overworld|nether|阵营|cedar|cinder|verdant|netherrack|徽章|badge/.test(q))key='faction';
+ else if(/overworld|nether|阵营|cedar|cinder|verdant|netherrack|徽章|badge|ice|冰块|台阶/.test(q))key='faction';
  else if(/golem|傀儡|白球|white ball|光球/.test(q))key='golem';
  else if(/飞|fly|creative|创造/.test(q))key='fly';
  else if(/打我|hit me|ouch|hurt|为什么打/.test(q))key='hit';
@@ -1661,10 +1662,15 @@ function factionTag(text,color){
 function campAnchor(dir){
  const sx=Math.round(spawn.x),sz=Math.round(spawn.z);
  const roomX=Math.max(0,Math.min(sx-16,SX-17-sx)),roomZ=Math.max(0,Math.min(sz-16,SZ-17-sz));
- const useX=roomX>=roomZ;
- const dist=Math.min(32,Math.max(18,useX?roomX:roomZ));
+ const useX=roomX>=18||roomX>=roomZ;
+ const dist=Math.min(32,Math.max(18,useX?Math.max(roomX,18):roomZ));
  if(useX)return {x:Math.max(16,Math.min(SX-17,sx+dir*dist)),z:sz};
  return {x:sx,z:Math.max(16,Math.min(SZ-17,sz+dir*dist))};
+}
+function campWords(){
+ const side=(c)=>{if(!c)return {zh:'西',en:'west'};const dx=c.x+.5-spawn.x,dz=c.z+.5-spawn.z;if(Math.abs(dx)>=Math.abs(dz))return dx>=0?{zh:'东',en:'east'}:{zh:'西',en:'west'};return dz>=0?{zh:'南',en:'south'}:{zh:'北',en:'north'}};
+ const ow=side(factionCamps.find(c=>c.id==='overworld')),ne=side(factionCamps.find(c=>c.id==='nether'));
+ return {ow:ow.zh,ne:ne.zh,owe:ow.en,nee:ne.en};
 }
 function campFloorAt(cx,cz){
  let max=2;
@@ -1697,18 +1703,53 @@ function makeFactionNpc(kind,x,y,z){
  group.position.set(x,y,z);scene.add(group);
  return {kind,name:over?'Cedar':'Cinder',group,tag,bodyMat,headMat,x,y,z,gifted:false,line:''};
 }
+function carveNetherPit(cx,cz,floor){
+ const landing=floor-7;
+ const dx=Math.sign(Math.round(spawn.x)-cx)||0;
+ const dz=dx?0:(Math.sign(Math.round(spawn.z)-cz)||1);
+ for(let z=cz-3;z<=cz+3;z++)for(let x=cx-3;x<=cx+3;x++){
+  if(!inB(x,1,z))continue;
+  for(let y=1;y<landing;y++)if(get(x,y,z)===AIR||get(x,y,z)===WATER)setBlock(x,y,z,NETHERRACK,true);
+  setBlock(x,landing,z,NETHERRACK,true);
+  for(let y=landing+1;y<floor;y++)if(get(x,y,z)!==BEDROCK)setBlock(x,y,z,AIR,true);
+  const ring=Math.max(Math.abs(x-cx),Math.abs(z-cz));
+  if(ring<=2)setBlock(x,floor,z,ICE,true);
+  else if(ring===3)setBlock(x,floor,z,NBRICK,true);
+ }
+ for(let z=cz-4;z<=cz+4;z++)for(let x=cx-4;x<=cx+4;x++){
+  if(Math.max(Math.abs(x-cx),Math.abs(z-cz))!==4||!inB(x,1,z))continue;
+  for(let y=1;y<landing;y++)if(get(x,y,z)===AIR||get(x,y,z)===WATER)setBlock(x,y,z,NBRICK,true);
+  for(let y=landing;y<floor;y++)if(get(x,y,z)!==BEDROCK)setBlock(x,y,z,NBRICK,true);
+ }
+ const steps=floor-landing,porch=4,last=steps+porch;
+ for(let s=0;s<=last;s++){
+  const x=cx+dx*(4+s),z=cz+dz*(4+s),y=Math.min(floor,landing+s);
+  for(const w of [-1,0,1]){
+   const xx=x+dz*w,zz=z+dx*w;
+   if(!inB(xx,1,zz))continue;
+   for(let yy=1;yy<y;yy++)if(get(xx,yy,zz)===AIR||get(xx,yy,zz)===WATER)setBlock(xx,yy,zz,NETHERRACK,true);
+   if(get(xx,y,zz)!==BEDROCK)setBlock(xx,y,zz,NETHERRACK,true);
+   for(let h=1;h<=5;h++)if(inB(xx,y+h,zz)&&get(xx,y+h,zz)!==BEDROCK)setBlock(xx,y+h,zz,AIR,true);
+  }
+ }
+ for(const [x,z] of [[cx-dx*2,cz-dz*2],[cx+dz*2,cz+dx*2],[cx-dz*2,cz-dx*2]])if(inB(x,landing+1,z)&&get(x,landing+1,z)===AIR)setBlock(x,landing+1,z,TORCH,true);
+ flushDirty();
+ return {ice:{x:cx,y:floor,z:cz},landing:{x:cx,y:landing,z:cz},stair:{x:cx+dx*4,z:cz+dz*4,y:landing,dx,dz,steps,end:4+last},cinder:{x:cx-dx*1.5+.5,y:landing+1,z:cz-dz*1.5+.5}};
+}
 function buildFactions(){
  clearFaction();
  const ow=campAnchor(1),ne=campAnchor(-1);
- const of=campFloorAt(ow.x,ow.z),nf=campFloorAt(ne.x,ne.z);
+ const of=campFloorAt(ow.x,ow.z);
+ const nf=Math.max(12,Math.min(SY-8,campFloorAt(ne.x,ne.z)));
  paintCamp(ow.x,ow.z,of,VERDANT,VERDANT,OW_BANNER);
  paintCamp(ne.x,ne.z,nf,NETHERRACK,NBRICK,NE_BANNER);
+ const pit=carveNetherPit(ne.x,ne.z,nf);
  factionCamps=[
   {id:'overworld',x:ow.x,z:ow.z,floor:of,block:VERDANT,banner:OW_BANNER},
-  {id:'nether',x:ne.x,z:ne.z,floor:nf,block:NETHERRACK,banner:NE_BANNER}
+  {id:'nether',x:ne.x,z:ne.z,floor:nf,block:NETHERRACK,banner:NE_BANNER,ice:pit.ice,landing:pit.landing,stair:pit.stair}
  ];
  factionNpcs.push(makeFactionNpc('overworld',ow.x+.5,of+1,ow.z+.5));
- factionNpcs.push(makeFactionNpc('nether',ne.x+.5,nf+1,ne.z+.5));
+ factionNpcs.push(makeFactionNpc('nether',pit.cinder.x,pit.cinder.y,pit.cinder.z));
  for(const n of factionNpcs)n.tag.quaternion.copy(camera.quaternion);
 }
 function nearestFaction(){
@@ -1727,7 +1768,7 @@ function updateFactionUi(){
 }
 function talkFaction(){
  const n=nearestFaction();
- if(!n){toast('向东找绿色 Overworld，向西找红色 Nether，靠近后按 G');return false}
+ if(!n){const dir=campWords();toast('向'+dir.ow+'找绿色 Overworld，向'+dir.ne+'找红色 Nether。走到浅色冰块上会掉进地下，沿台阶走上来。靠近后按 G');return false}
  const over=n.kind==='overworld';
  if(!n.gifted){
   n.gifted=true;
@@ -1739,7 +1780,7 @@ function talkFaction(){
  return n.line;
 }
 function factionInfo(){
- const pack=id=>{const c=factionCamps.find(s=>s.id===id);const n=factionNpcs.find(s=>s.kind===id);return c&&n?{x:c.x,z:c.z,floor:c.floor,block:c.block,banner:c.banner,name:n.name,nx:n.x,ny:n.y,nz:n.z,gifted:n.gifted,body:n.bodyMat.color.getHex(),head:n.headMat.color.getHex()}:null};
+ const pack=id=>{const c=factionCamps.find(s=>s.id===id);const n=factionNpcs.find(s=>s.kind===id);if(!c||!n)return null;const o={x:c.x,z:c.z,floor:c.floor,block:c.block,banner:c.banner,name:n.name,nx:n.x,ny:n.y,nz:n.z,gifted:n.gifted,body:n.bodyMat.color.getHex(),head:n.headMat.color.getHex()};if(c.ice)o.ice=c.ice;if(c.landing)o.landing=c.landing;if(c.stair)o.stair=c.stair;return o};
  return {overworld:pack('overworld'),nether:pack('nether'),camps:factionCamps.length,npcs:factionNpcs.length};
 }
 
@@ -1763,7 +1804,7 @@ if(touchMode)enableTouch();newWorld();$('hud').style.display='none';requestAnima
 function bgInfo(){const hemi=scene.children.find(o=>o.isHemisphereLight),dir=scene.children.find(o=>o.isDirectionalLight);return {sky:SKY.getHex(),water:WATERFOG.getHex(),cave:CAVEFOG.getHex(),bg:scene.background.getHex(),fog:scene.fog.color.getHex(),hemiSky:hemi?hemi.color.getHex():null,hemiGround:hemi?hemi.groundColor.getHex():null,hemiInt:hemi?hemi.intensity:null,dirColor:dir?dir.color.getHex():null,dirInt:dir?dir.intensity:null}}
 // tiny debug hook (used for automated testing)
 window.__mc={startPlay,state:()=>state,P,zombies,npcs,wGolems,creepers,drops,villages:()=>villages,stats,get,setBlock,doBreak,doPlace,fireMissile,fireDongfeng,detonateDongfeng,select,spawnZombie,makeNpc,makeZombie,makeWGolem,makeCreeper,explodeCreeper,hitWGolem,hitCreeper,openCraft,craft,RECIPES,count,addItem,inv:()=>inv,triggerAttract,inAttractCube,flyBlocks,ATTRACT_SIDE,ATTRACT_HALF,attractCd:()=>attractCd,attractFlash:()=>attractFlash,setAttractCd:v=>{attractCd=v},clearFlyBlocks,
- atk:()=>atkMult,baseDmg:()=>baseDmg,playerDmg,golemCount,golemKills:()=>golemKills,golemDeaths:()=>golemDeaths,kills:()=>kills,colTop,SX,SZ,VIEW:()=>VIEW,touchMode:()=>touchMode,enableTouch,joy:()=>joy,applyQuality,unlockAudio,stopAfter:n=>{stopAt=frames+n},clearZombies:()=>{while(zombies.length)removeZombie(zombies[0]);zTimer=999},clearCreepers:()=>{while(creepers.length)removeCreeper(creepers[0]);cTimer=999},setGameTime:t=>{gameTime=t},fps:()=>fps,setNoLock:()=>{noLock=true},chunksBuilt:()=>chunks.filter(c=>c.built).length,controlMode:()=>controlMode,setControlMode:on=>{controlMode=!!on;syncModeUI()},creative:()=>creative,setCreative,flying:()=>flying,setFlying,openSub2,closeSub2,sub2Open:()=>sub2Open,worldWrecked:()=>worldWrecked,blockCount:()=>{let n=0;for(let i=0;i<world.length;i++)if(world[i])n++;return n},ids:{STICK,PLANKS,LOG,COAL_I,TORCH,IRON,IRON_INGOT,IRON_SWORD,WOOD_PICK,STONE_PICK,COBBLE,TABLE,FURNACE,MISSILE,DF_MISSILE,SAND,DIAMOND,DIAMOND_I,DBLK,GLASS,AIR,BEDROCK,VERDANT,OW_BANNER,NETHERRACK,NBRICK,NE_BANNER,SUN_BADGE,EMBER_BADGE},diamonds:()=>diamonds,SY,DBLK,GLASS,AIR,BEDROCK,DIAMOND,nearLaptop,laptopPos:()=>laptop&&{x:laptop.x,y:laptop.y,z:laptop.z,kind:laptop.kind},buildPos:()=>buildPc&&{x:buildPc.x,y:buildPc.y,z:buildPc.z,kind:buildPc.kind,visible:!!(buildPc.mesh&&buildPc.mesh.visible)},interact,chooseLaptop,chooseBuild,openLaptop,openBuild,closeLaptop,closeBuild,nearestKind:()=>{const c=nearestComputer();return c?c.kind:null},xformActive:()=>!!xform,buildActive:()=>!!buildJob,finishTransform,finishBuild,buildReport,worldChecksum,genReady:()=>!gen,stepGen,standColumn,buildChunk,chunkIndexCount,updateLapUI,overlapsPlayer,worldBytes:()=>world.byteLength,auditBlocks,wipeWorld,newWorld,bgInfo,keys:()=>keys,talkFaction,factionInfo,VERDANT,NETHERRACK,OW_BANNER,NE_BANNER,NBRICK,SUN_BADGE,EMBER_BADGE,verity:()=>verity&&{x:verity.pos.x,y:verity.pos.y,z:verity.pos.z,hp:verity.hp,carried:!!verity.carried,line:verity.line},hitVerity,toggleCarry,dropVerity,openVerityChat,closeVerityChat,sendVerityChat,verityReply,nearVerity,rayHitsVerity,syncVerityHud,updVerity,chatOpen:()=>verityChatOpen,LAP_REACH,BD};
+ atk:()=>atkMult,baseDmg:()=>baseDmg,playerDmg,golemCount,golemKills:()=>golemKills,golemDeaths:()=>golemDeaths,kills:()=>kills,colTop,SX,SZ,VIEW:()=>VIEW,touchMode:()=>touchMode,enableTouch,joy:()=>joy,applyQuality,unlockAudio,stopAfter:n=>{stopAt=frames+n},clearZombies:()=>{while(zombies.length)removeZombie(zombies[0]);zTimer=999},clearCreepers:()=>{while(creepers.length)removeCreeper(creepers[0]);cTimer=999},setGameTime:t=>{gameTime=t},fps:()=>fps,setNoLock:()=>{noLock=true},chunksBuilt:()=>chunks.filter(c=>c.built).length,controlMode:()=>controlMode,setControlMode:on=>{controlMode=!!on;syncModeUI()},creative:()=>creative,setCreative,flying:()=>flying,setFlying,openSub2,closeSub2,sub2Open:()=>sub2Open,worldWrecked:()=>worldWrecked,blockCount:()=>{let n=0;for(let i=0;i<world.length;i++)if(world[i])n++;return n},ids:{STICK,PLANKS,LOG,COAL_I,TORCH,IRON,IRON_INGOT,IRON_SWORD,WOOD_PICK,STONE_PICK,COBBLE,TABLE,FURNACE,MISSILE,DF_MISSILE,SAND,DIAMOND,DIAMOND_I,DBLK,GLASS,AIR,BEDROCK,VERDANT,OW_BANNER,NETHERRACK,NBRICK,NE_BANNER,ICE,SUN_BADGE,EMBER_BADGE},diamonds:()=>diamonds,SY,DBLK,GLASS,AIR,BEDROCK,DIAMOND,nearLaptop,laptopPos:()=>laptop&&{x:laptop.x,y:laptop.y,z:laptop.z,kind:laptop.kind},buildPos:()=>buildPc&&{x:buildPc.x,y:buildPc.y,z:buildPc.z,kind:buildPc.kind,visible:!!(buildPc.mesh&&buildPc.mesh.visible)},interact,chooseLaptop,chooseBuild,openLaptop,openBuild,closeLaptop,closeBuild,nearestKind:()=>{const c=nearestComputer();return c?c.kind:null},xformActive:()=>!!xform,buildActive:()=>!!buildJob,finishTransform,finishBuild,buildReport,worldChecksum,genReady:()=>!gen,stepGen,standColumn,buildChunk,chunkIndexCount,updateLapUI,overlapsPlayer,worldBytes:()=>world.byteLength,auditBlocks,wipeWorld,newWorld,bgInfo,keys:()=>keys,talkFaction,factionInfo,solidAt,update,ICE,VERDANT,NETHERRACK,OW_BANNER,NE_BANNER,NBRICK,SUN_BADGE,EMBER_BADGE,verity:()=>verity&&{x:verity.pos.x,y:verity.pos.y,z:verity.pos.z,hp:verity.hp,carried:!!verity.carried,line:verity.line},hitVerity,toggleCarry,dropVerity,openVerityChat,closeVerityChat,sendVerityChat,verityReply,nearVerity,rayHitsVerity,syncVerityHud,updVerity,chatOpen:()=>verityChatOpen,LAP_REACH,BD};
 })();
 
 </script>
