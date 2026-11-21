@@ -108,11 +108,19 @@ body.touch #touchUI{display:block}
  #touchBtns{bottom:max(120px,calc(env(safe-area-inset-bottom) + 110px))}
  #joyBase{bottom:max(120px,calc(env(safe-area-inset-bottom) + 110px))}
 }
+#lapHint{display:none;position:absolute;left:50%;top:46%;transform:translate(-50%,-70%);z-index:9;pointer-events:none;font-size:16px;font-weight:bold;color:#bff6ff;text-shadow:2px 2px 0 #000;background:rgba(0,0,0,.55);padding:8px 12px;max-width:min(92vw,420px);text-align:center}
+#btnUse{display:none;position:absolute;left:50%;bottom:calc(148px + env(safe-area-inset-bottom));transform:translateX(-50%);width:148px;height:48px;z-index:7}
+body.touch.near-lap #btnUse{display:block}
+#genOv{z-index:40;background:rgba(0,0,0,.72)}
+#laptopDlg{z-index:30}
+#laptopDlg .sub2box{max-width:min(92vw,460px)}
+#laptopDlg p{font-size:15px;line-height:1.45;margin:8px 0}
 </style></head><body>
 <div id="hud">
  <div id="hint">Click to capture mouse &middot; Mouse look<br>WASD / Arrows move &middot; Space jump &middot; Shift sprint<br>Left click mine / attack &middot; Right click place<br>E crafting &middot; 1-9 / wheel select<br>R new world &middot; Esc pause</div>
  <div id="stats"></div>
  <div id="cross"></div><div id="mineBar"><div></div></div><div id="toast"></div>
+ <div id="lapHint"></div>
  <div id="itemName"></div>
  <button type="button" class="ctrl-btn" id="ctrlBtnHud">开始操纵：关</button>
  <div id="hearts"></div>
@@ -126,6 +134,7 @@ body.touch #touchUI{display:block}
    <button type="button" class="tbtn" id="btnPlace">Place</button>
    <button type="button" class="tbtn" id="btnJump">Jump</button>
    <button type="button" class="tbtn" id="btnDown">Down</button>
+   <button type="button" class="tbtn" id="btnUse">使用电脑</button>
   </div>
  </div>
 </div>
@@ -136,7 +145,8 @@ body.touch #touchUI{display:block}
  <div class="box">
   <b>How to play</b><br>
   &bull; <b>Desktop:</b> mouse look, <b>W A S D</b> / arrows walk, <b>Space</b> jump, <b>Shift</b> sprint, left click mine/attack, right click place, <b>E</b> craft, <b>1-9</b> / wheel select, <b>R</b> new world, <b>Esc</b> pause<br>
-  &bull; <b>Phone &amp; tablet:</b> left joystick to move, drag the right half of the screen to look, on-screen <b>Jump</b>, hold <b>Mine / Attack</b>, <b>Place</b>, <b>Craft</b>, tap the hotbar, <b>New World</b><br>
+  &bull; <b>Phone &amp; tablet:</b> left joystick to move, drag the right half of the screen to look, on-screen <b>Jump</b>, hold <b>Mine / Attack</b>, <b>Place</b>, <b>Craft</b>, tap the hotbar, <b>New World</b>. Near the laptop, <b>使用电脑</b> / Craft opens it<br>
+  &bull; <b>更大更长的陆地：</b>地图 <b>512×1024</b>（高 40，原来是 256×256）。出生点朝村庄的方向有一台<b>笔记本电脑</b>。靠近后按 <b>E</b>（手机点<b>使用电脑</b>）：<b>是</b>把所有非空气方块变成<b>钻石块</b>（不是矿石），<b>否</b>变成<b>玻璃块</b>。空气不变，基岩和其他实心方块也会变。可以反复选。走开再按 E 仍是合成<br>
   &bull; Explore a huge world: <b>caves</b>, <b>mineshafts</b> with torches, ores, and <b>villages</b> with friendly wandering villagers (they never attack)<br>
   &bull; <b>Zombies</b> hunt you and iron golems — a zombie kills a golem in one hit<br>
   &bull; <b>Iron golems</b> smash zombies in <b>one hit</b>, and <b>never attack you</b> unless <b>开始操纵</b> is on (then they chase and punch for 2 hearts). One hit from you destroys a golem… and <b>two new golems</b> rise in its place!<br>
@@ -158,6 +168,8 @@ body.touch #touchUI{display:block}
 <div id="sub2" class="ov hidden"><div class="sub2box"><h2>二</h2><button type="button" class="btn" id="creativeBtn">创造：关（生存模式）</button><button type="button" class="btn" id="flyBtn">飞行：关</button><button type="button" class="btn" id="closeSub2">关闭</button></div></div>
 <div id="craft" class="ov hidden"><h2>Crafting</h2><div class="cwrap"><div class="cpanel"><h3>Inventory</h3><div id="invGrid"></div><div class="tip">Click or tap a slot, then another, to swap items. Bottom row = hotbar.</div><div id="atkInfo"></div></div><div class="cpanel"><h3>Recipes <small style="font-weight:normal">(green = craftable, tap to craft)</small></h3><div id="recipes"></div></div></div><button class="btn" id="closeCraft">Close (E)</button></div>
 <div id="dead" class="ov hidden"><h2>You died!</h2><div id="deadMsg" style="font-size:18px"></div><button class="btn" id="respawnBtn">Respawn</button><button class="btn" id="newBtn2">New World (R)</button></div>
+<div id="laptopDlg" class="ov hidden"><div class="sub2box"><h2>笔记本电脑</h2><p>要把<b>整个世界</b>里所有非空气方块变成什么？空气保持空气。基岩、水和其它方块也会变。你站着的格子会留出空气，不会被埋住。可以反复选择。</p><button type="button" class="btn" id="lapYes">是 — 全部变成钻石块</button><button type="button" class="btn" id="lapNo">否 — 全部变成玻璃块</button><button type="button" class="btn" id="lapCancel">取消</button></div></div>
+<div id="genOv" class="ov"><h2>正在生成世界</h2><p id="genMsg">正在铺设更长的陆地…</p></div>
 <script>
 /**
  * @license
@@ -170,7 +182,7 @@ body.touch #touchUI{display:block}
 <script>
 (function(){
 'use strict';
-const SX=256,SZ=256,SY=40,CS=16,WL=14,REACH=6,VR=9,MAXG=60,ATK_CAP=1e30;
+const SX=512,SZ=1024,SY=40,CS=16,WL=14,REACH=6,VR=9,MAXG=60,ATK_CAP=1e30;
 let VIEW=72,baseDmg=10,touchMode=false,lastTouch=0;
 function detectTouch(){
  try{
@@ -186,12 +198,12 @@ function dprCap(){return Math.min(devicePixelRatio||1,touchMode?1.5:2)}
 const $=id=>document.getElementById(id);
 const rnd=n=>Math.floor(Math.random()*n),clamp=v=>Math.max(0,Math.min(255,v|0));
 // ================= blocks & items =================
-const AIR=0,GRASS=1,DIRT=2,STONE=3,SAND=4,WATER=5,LOG=6,LEAVES=7,PLANKS=8,COBBLE=9,COAL=10,IRON=11,GOLD=12,DIAMOND=13,GLASS=14,BEDROCK=15,BRICK=16,GRAVEL=17,DOOR_LOW=18,DOOR_TOP=19,FARMLAND=20,WHEAT=21,TABLE=22,FURNACE=23,TORCH=24;
+const AIR=0,GRASS=1,DIRT=2,STONE=3,SAND=4,WATER=5,LOG=6,LEAVES=7,PLANKS=8,COBBLE=9,COAL=10,IRON=11,GOLD=12,DIAMOND=13,GLASS=14,BEDROCK=15,BRICK=16,GRAVEL=17,DOOR_LOW=18,DOOR_TOP=19,FARMLAND=20,WHEAT=21,TABLE=22,FURNACE=23,TORCH=24,DBLK=25;
 const STICK=100,COAL_I=101,IRON_INGOT=102,DIAMOND_I=103,WOOD_SWORD=110,STONE_SWORD=111,IRON_SWORD=112,WOOD_PICK=113,STONE_PICK=114,MISSILE=115,DF_MISSILE=116;
 const NOSOLID=new Set([AIR,WATER,DOOR_LOW,DOOR_TOP,WHEAT,TORCH]);
-const HARD=new Set([STONE,COBBLE,COAL,IRON,GOLD,DIAMOND,BRICK,FURNACE]);
-const T={grassTop:0,grassSide:1,dirt:2,stone:3,sand:4,water:5,logSide:6,logTop:7,leaves:8,planks:9,cobble:10,coal:11,iron:12,gold:13,diamond:14,glass:15,bedrock:16,brick:17,gravel:18,doorLow:19,doorTop:20,farmland:21,wheat:22,tableTop:23,tableSide:24,furnaceSide:25,furnaceFront:26,torch:27};
-const NT=28;
+const HARD=new Set([STONE,COBBLE,COAL,IRON,GOLD,DIAMOND,BRICK,FURNACE,DBLK]);
+const T={grassTop:0,grassSide:1,dirt:2,stone:3,sand:4,water:5,logSide:6,logTop:7,leaves:8,planks:9,cobble:10,coal:11,iron:12,gold:13,diamond:14,glass:15,bedrock:16,brick:17,gravel:18,doorLow:19,doorTop:20,farmland:21,wheat:22,tableTop:23,tableSide:24,furnaceSide:25,furnaceFront:26,torch:27,dblock:28};
+const NT=29;
 const BD=[];
 function def(id,name,side,top,bottom,tr,drop){BD[id]={name,t:[side,top==null?side:top,bottom==null?(top==null?side:top):bottom],tr:!!tr,drop:drop===undefined?id:drop}}
 def(AIR,'Air',0,0,0,true,0);def(GRASS,'Grass Block',T.grassSide,T.grassTop,T.dirt,false,DIRT);def(DIRT,'Dirt',T.dirt);def(STONE,'Stone',T.stone,null,null,false,COBBLE);
@@ -200,7 +212,7 @@ def(PLANKS,'Oak Planks',T.planks);def(COBBLE,'Cobblestone',T.cobble);def(COAL,'C
 def(DIAMOND,'Diamond Ore',T.diamond,null,null,false,DIAMOND_I);def(GLASS,'Glass',T.glass,null,null,true);def(BEDROCK,'Bedrock',T.bedrock);def(BRICK,'Bricks',T.brick);
 def(GRAVEL,'Gravel Path',T.gravel);def(DOOR_LOW,'Oak Door',T.doorLow,T.planks,T.planks,true);def(DOOR_TOP,'Oak Door',T.doorTop,T.planks,T.planks,true,DOOR_LOW);
 def(FARMLAND,'Farmland',T.dirt,T.farmland,T.dirt,false,DIRT);def(WHEAT,'Wheat',T.wheat,T.wheat,T.wheat,true,0);
-def(TABLE,'Crafting Table',T.tableSide,T.tableTop,T.planks);def(FURNACE,'Furnace',T.furnaceFront,T.furnaceSide,T.furnaceSide);def(TORCH,'Torch',T.torch,null,null,true);
+def(TABLE,'Crafting Table',T.tableSide,T.tableTop,T.planks);def(FURNACE,'Furnace',T.furnaceFront,T.furnaceSide,T.furnaceSide);def(TORCH,'Torch',T.torch,null,null,true);def(DBLK,'Diamond Block',T.dblock);
 // ================= textures =================
 function px(c,x,y,r,g,b,a){c.fillStyle=`rgba(${clamp(r)},${clamp(g)},${clamp(b)},${a==null?1:a})`;c.fillRect(x,y,1,1)}
 function noise(c,[r,g,b],v,y0=0,y1=16,x0=0,x1=16){for(let i=x0;i<x1;i++)for(let j=y0;j<y1;j++){const d=(Math.random()-.5)*v;px(c,i,j,r+d,g+d,b+d)}}
@@ -234,8 +246,10 @@ const TILE_DRAW=[
  c=>{planksTex(c);c.fillStyle='#5a3d22';c.fillRect(0,0,16,3);c.fillStyle='#777';c.fillRect(3,6,3,7);c.fillRect(10,6,3,4);c.fillStyle='#aaa';c.fillRect(11,10,1,3);c.fillRect(4,8,1,1)},
  c=>{noise(c,[110,110,110],20);c.fillStyle='#5f5f5f';c.fillRect(0,0,16,1);c.fillRect(0,15,16,1)},
  c=>{noise(c,[110,110,110],20);c.fillStyle='#4a4a4a';c.fillRect(3,7,10,6);c.fillStyle='#ff9b2e';c.fillRect(5,10,6,3);c.fillStyle='#ffd34d';c.fillRect(7,11,2,2);c.fillStyle='#333';c.fillRect(2,3,12,2)},
- c=>{c.fillStyle='#6b4a2b';c.fillRect(0,0,16,16);c.fillStyle='#8a6238';c.fillRect(4,4,8,12);c.fillStyle='#ffd34d';c.fillRect(0,0,16,4);c.fillStyle='#fff6b0';c.fillRect(4,1,8,2)}
+ c=>{c.fillStyle='#6b4a2b';c.fillRect(0,0,16,16);c.fillStyle='#8a6238';c.fillRect(4,4,8,12);c.fillStyle='#ffd34d';c.fillRect(0,0,16,4);c.fillStyle='#fff6b0';c.fillRect(4,1,8,2)},
+ c=>{c.fillStyle='#128a99';c.fillRect(0,0,16,16);c.fillStyle='#3ad7ea';c.fillRect(1,1,14,14);c.fillStyle='#7af4ff';c.fillRect(3,3,6,5);c.fillStyle='#e9ffff';c.fillRect(4,4,3,2);c.fillStyle='#0c6470';c.fillRect(0,0,16,1);c.fillRect(0,15,16,1);c.fillRect(0,0,1,16);c.fillRect(15,0,1,16)}
 ];
+if(TILE_DRAW.length!==NT)throw new Error('tiles '+TILE_DRAW.length+'!='+NT);
 const tiles=TILE_DRAW.map(fn=>{const cv=document.createElement('canvas');cv.width=cv.height=16;fn(cv.getContext('2d'));return cv});
 const atlas=document.createElement('canvas');atlas.width=16*NT;atlas.height=16;const actx=atlas.getContext('2d');tiles.forEach((t,i)=>actx.drawImage(t,i*16,0));
 const tileAvg=tiles.map(t=>{const d=t.getContext('2d').getImageData(0,0,16,16).data;let r=0,g=0,b=0,n=0;for(let i=0;i<d.length;i+=4)if(d[i+3]>128){r+=d[i];g+=d[i+1];b+=d[i+2];n++}n=n||1;return new THREE.Color(r/n/255,g/n/255,b/n/255)});
@@ -287,77 +301,141 @@ function get(x,y,z){return inB(x,y,z)?world[idx(x,y,z)]:AIR}
 function solidAt(x,y,z){if(x<0||z<0||x>=SX||z>=SZ)return true;if(y<0||y>=SY)return false;return !NOSOLID.has(world[idx(x,y,z)])}
 function opaqueAt(x,y,z){const b=get(x,y,z);return b!==AIR&&!BD[b].tr?1:0}
 function calcTop(x,z){let t=-1;for(let y=SY-1;y>=0;y--){const b=world[idx(x,y,z)];if(b!==AIR&&b!==GLASS&&b!==TORCH){t=y;break}}colTop[z*SX+x]=t}
-let seed=1,villages=[],stats={caveCells:0,shafts:0,caveSample:null};const torches=new Set();
+function standColumn(x,z){x=Math.floor(x);z=Math.floor(z);if(x<0||z<0||x>=SX||z>=SZ)return -1;const t=colTop[z*SX+x];if(t>=0)return t;for(let y=SY-1;y>=0;y--){const b=world[idx(x,y,z)];if(b!==AIR&&!NOSOLID.has(b))return y}return -1}
+let seed=1,villages=[],stats={caveCells:0,shafts:0,caveSample:null},gen=null,playAfterGen=false,laptop=null,xform=null,meshBoost=0;const torches=new Set();
 function hash2(x,z){let h=(Math.imul(x,374761393)+Math.imul(z,668265263)+Math.imul(seed,1442695041))|0;h=Math.imul(h^(h>>>13),1274126177);h^=h>>>16;return(h>>>0)/4294967296}
 function vnoise(x,z){const xi=Math.floor(x),zi=Math.floor(z),xf=x-xi,zf=z-zi,u=xf*xf*(3-2*xf),v=zf*zf*(3-2*zf);const a=hash2(xi,zi),b=hash2(xi+1,zi),c=hash2(xi,zi+1),d=hash2(xi+1,zi+1);return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v}
 function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
-function genWorld(){
- seed=(Math.random()*1e9)|0;const R=mulberry(seed);world.fill(0);torches.clear();
- const hm=new Int16Array(SX*SZ);
- for(let z=0;z<SZ;z++)for(let x=0;x<SX;x++){
-  const n=vnoise(x/26,z/26)*.6+vnoise(x/11+50,z/11+7)*.28+vnoise(x/4.5+99,z/4.5+3)*.12;
-  let h=Math.floor(7+n*18);const m=vnoise(x/34+200,z/34+200);if(m>.58)h+=Math.floor((m-.58)*36);
-  h=Math.max(5,Math.min(SY-10,h));hm[z*SX+x]=h;
-  for(let y=0;y<=h;y++){let b;if(y===0)b=BEDROCK;else if(y<h-3)b=STONE;else if(h<=WL+1)b=SAND;else b=y===h?GRASS:DIRT;world[idx(x,y,z)]=b}
-  for(let y=h+1;y<=WL;y++)world[idx(x,y,z)]=WATER;
- }
- // ---- villages: flat-ish dry spots ----
- villages=[];
- const NV=Math.max(6,Math.round(6*(SX*SZ)/(128*128)));
- for(let v=0;v<NV;v++){let best=null,bs=1e9;for(let t=0;t<100;t++){const cx=VR+3+Math.floor(R()*(SX-2*VR-6)),cz=VR+3+Math.floor(R()*(SZ-2*VR-6));if(villages.some(o=>Math.hypot(o.x-cx,o.z-cz)<36))continue;
-   let sum=0,sum2=0,n=0,low=0;for(let dz=-VR;dz<=VR;dz+=2)for(let dx=-VR;dx<=VR;dx+=2){const h=hm[(cz+dz)*SX+cx+dx];sum+=h;sum2+=h*h;n++;if(h<=WL+1)low++}
-   const mean=sum/n,sc=sum2/n-mean*mean+low;if(mean<WL+1.5)continue;if(sc<bs){bs=sc;best={x:cx,z:cz,h:Math.max(WL+2,Math.min(SY-12,Math.round(mean)))}}}
-  if(best)villages.push(best)}
- for(const V of villages)for(let dz=-VR;dz<=VR;dz++)for(let dx=-VR;dx<=VR;dx++){const x=V.x+dx,z=V.z+dz;hm[z*SX+x]=V.h;for(let y=1;y<SY;y++)world[idx(x,y,z)]=y<V.h-3?STONE:y<V.h?DIRT:y===V.h?GRASS:AIR}
- const nearV=(x,z,m)=>villages.some(V=>Math.abs(x-V.x)<=VR+m&&Math.abs(z-V.z)<=VR+m);
- // ---- ore veins ----
- const vein=(x,y,z,b,n)=>{for(let k=0;k<n;k++){if(get(x,y,z)===STONE)world[idx(x,y,z)]=b;const d=Math.floor(R()*6);if(d===0)x++;else if(d===1)x--;else if(d===2)y++;else if(d===3)y--;else if(d===4)z++;else z--}};
- const A=SX*SZ/2304;
- for(let k=0;k<70*A;k++)vein(Math.floor(R()*SX),1+Math.floor(R()*20),Math.floor(R()*SZ),COAL,5+Math.floor(R()*5));
- for(let k=0;k<45*A;k++)vein(Math.floor(R()*SX),1+Math.floor(R()*15),Math.floor(R()*SZ),IRON,3+Math.floor(R()*4));
- for(let k=0;k<20*A;k++)vein(Math.floor(R()*SX),1+Math.floor(R()*10),Math.floor(R()*SZ),GOLD,3+Math.floor(R()*3));
- for(let k=0;k<14*A;k++)vein(Math.floor(R()*SX),1+Math.floor(R()*7),Math.floor(R()*SZ),DIAMOND,2+Math.floor(R()*3));
- // ---- worm caves ----
- const carved=[];
- const carve=(cx,cy,cz,r)=>{const r2=r*r,ri=Math.ceil(r);for(let dy=-ri;dy<=ri;dy++)for(let dz=-ri;dz<=ri;dz++)for(let dx=-ri;dx<=ri;dx++){if(dx*dx+dy*dy+dz*dz>r2)continue;const x=Math.floor(cx+dx),y=Math.floor(cy+dy),z=Math.floor(cz+dz);
-  if(x<1||z<1||x>=SX-1||z>=SZ-1||y<2||y>=SY-1)continue;const i=idx(x,y,z),b=world[i];if(b===AIR||b===WATER||b===BEDROCK)continue;
-  if(world[idx(x,y+1,z)]===WATER||world[idx(x+1,y,z)]===WATER||world[idx(x-1,y,z)]===WATER||world[idx(x,y,z+1)]===WATER||world[idx(x,y,z-1)]===WATER)continue;
-  if(nearV(x,z,2))continue;world[i]=AIR;carved.push(i)}};
- const worms=Math.round(70*A/3.2);
- for(let w=0;w<worms;w++){let x=4+R()*(SX-8),z=4+R()*(SZ-8);const surf=w%4===0;const hc=hm[Math.floor(z)*SX+Math.floor(x)];
-  if(surf&&(hc<=WL+1||nearV(Math.floor(x),Math.floor(z),3)))continue;
-  let y=surf?hc+1:4+R()*Math.max(2,hc-9);let yaw=R()*Math.PI*2,pit=surf?-.55:(R()-.5)*.4;const len=60+R()*100;
-  for(let s=0;s<len;s++){const r=1.3+(Math.sin(s*.13+w)+1)*.6+R()*.3;carve(x,y,z,r);
-   x+=Math.cos(yaw)*Math.cos(pit);z+=Math.sin(yaw)*Math.cos(pit);y+=Math.sin(pit);yaw+=(R()-.5)*.5;
-   if(surf&&s<14)pit=Math.min(-.4,pit*.9+(R()-.5)*.3);else pit=pit*.85+(R()-.5)*.35;
-   const hh=hm[Math.max(0,Math.min(SZ-1,Math.floor(z)))*SX+Math.max(0,Math.min(SX-1,Math.floor(x)))];
-   if(y<4){y=4;pit=Math.abs(pit)}if(!(surf&&s<14)&&y>hh-4){pit=-.3}
-   if(x<3||z<3||x>SX-3||z>SZ-3)break}}
- stats.caveCells=carved.length;
- // ores on cave walls
- for(const i of carved){const x=i%SX,z=Math.floor(i/SX)%SZ,y=Math.floor(i/(SX*SZ));for(const [dx,dy,dz] of [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]]){if(get(x+dx,y+dy,z+dz)===STONE&&R()<.035){const r=R();world[idx(x+dx,y+dy,z+dz)]=y<7&&r<.18?DIAMOND:y<10&&r<.32?GOLD:r<.6?IRON:COAL}}}
- const deep=carved.filter(i=>Math.floor(i/(SX*SZ))<8);stats.caveSample=deep.length?deep[Math.floor(deep.length/2)]:carved[0];
- // ---- mineshafts ----
- stats.shafts=0;
- const corridor=(x,z,y0,dx,dz,len,depth)=>{for(let s=0;s<len;s++){const cx=x+dx*s,cz=z+dz*s;if(cx<3||cz<3||cx>SX-4||cz>SZ-4)return;if(nearV(cx,cz,2))return;
-   for(let w=-1;w<=1;w++){const X=cx+dz*w,Z=cz+dx*w;if(hm[Z*SX+X]<y0+5)continue;
-    for(let h=0;h<=2;h++)if(world[idx(X,y0+h,Z)]!==WATER)world[idx(X,y0+h,Z)]=AIR;world[idx(X,y0-1,Z)]=PLANKS}
-   if(s%4===0)for(const w of [-1,1]){const X=cx+dz*w,Z=cz+dx*w;if(hm[Z*SX+X]<y0+5)continue;world[idx(X,y0,Z)]=LOG;world[idx(X,y0+1,Z)]=LOG}
-   if(s%4===0)for(let w=-1;w<=1;w++){const X=cx+dz*w,Z=cz+dx*w;if(hm[Z*SX+X]>=y0+5)world[idx(X,y0+2,Z)]=PLANKS}
-   if(s%8===2){const X=cx+dz,Z=cz+dx;if(world[idx(X,y0,Z)]===AIR){world[idx(X,y0,Z)]=TORCH;torches.add(idx(X,y0,Z))}}
-   if(depth>0&&s%11===6&&R()<.7){const sd=R()<.5?1:-1;corridor(cx+dz*sd*2,cz+dx*sd*2,y0,dz*sd,dx*sd,12+Math.floor(R()*20),depth-1)}}};
- for(let k=0;k<Math.round(4*A/3.2)+1;k++){const x=12+Math.floor(R()*(SX-24)),z=12+Math.floor(R()*(SZ-24)),y0=5+Math.floor(R()*5);if(nearV(x,z,4))continue;stats.shafts++;const dir=R()<.5;corridor(x,z,y0,dir?1:0,dir?0:1,24+Math.floor(R()*24),2);corridor(x,z,y0,dir?-1:0,dir?0:-1,12+Math.floor(R()*20),1)}
- // ---- exposed surface ores ----
- for(let k=0;k<10*A;k++){const x=2+Math.floor(R()*(SX-4)),z=2+Math.floor(R()*(SZ-4)),h=hm[z*SX+x];if(h>WL+1&&!nearV(x,z,1)&&world[idx(x,h,z)]===GRASS){world[idx(x,h-1,z)]=[COAL,COAL,IRON,IRON,GOLD,DIAMOND][Math.floor(R()*6)];world[idx(x,h,z)]=AIR}}
- // ---- trees ----
- for(let z=3;z<SZ-3;z++)for(let x=3;x<SX-3;x++){const h=hm[z*SX+x];if(world[idx(x,h,z)]!==GRASS||R()>.022||nearV(x,z,4))continue;
-  let ok=true;for(let dz=-2;dz<=2&&ok;dz++)for(let dx=-2;dx<=2;dx++)if(get(x+dx,h+1,z+dz)===LOG){ok=false;break}if(!ok)continue;
-  const th=4+Math.floor(R()*2),top=h+th;if(top+2>=SY)continue;
-  for(let y=top-2;y<=top+1;y++){const r=y>=top?1:2;for(let dz=-r;dz<=r;dz++)for(let dx=-r;dx<=r;dx++){if(Math.abs(dx)===r&&Math.abs(dz)===r&&(y===top+1||R()<.5))continue;if(get(x+dx,y,z+dz)===AIR)world[idx(x+dx,y,z+dz)]=LEAVES}}
-  world[idx(x,h,z)]=DIRT;for(let y=h+1;y<=top;y++)world[idx(x,y,z)]=LOG}
- villages.forEach(V=>buildVillage(V,R));
- for(let z=0;z<SZ;z++)for(let x=0;x<SX;x++)calcTop(x,z);
+function beginGen(){
+ try{
+  xform=null;worldWrecked=false;
+  if(typeof endDongfeng==='function')endDongfeng();
+  chunks.forEach(discardChunk);
+  if(typeof clearAllMobs==='function')clearAllMobs();
+  if(laptop&&laptop.mesh){scene.remove(laptop.mesh);laptop.mesh.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material&&o.material.dispose)o.material.dispose()});laptop=null}
+  seed=(Math.random()*1e9)|0;const R=mulberry(seed);
+  world.fill(0);torches.clear();villages=[];colTop.fill(-1);
+  gen={phase:'terrain',z:0,R,hm:new Int16Array(SX*SZ),t0:performance.now(),v:0,carved:[],A:SX*SZ/2304};
+  state='gen';
+  const ov=$('genOv');if(ov)ov.classList.remove('hidden');
+  const msg=$('genMsg');if(msg)msg.textContent='正在铺设更长的陆地（'+SX+'×'+SZ+'）…';
+ }catch(err){gen=null;toast('无法开始生成：'+(err&&err.message||err));state='menu'}
 }
+function stepGen(){
+ if(!gen)return;
+ const t0=performance.now(),B=12,R=gen.R,hm=gen.hm;
+ const msg=s=>{const e=$('genMsg');if(e)e.textContent=s};
+ try{
+  if(gen.phase==='terrain'){
+   msg('正在铺设地形 '+gen.z+'/'+SZ+' …');
+   for(;gen.z<SZ&&performance.now()-t0<B;gen.z++){const z=gen.z;
+    for(let x=0;x<SX;x++){
+     const n=vnoise(x/26,z/26)*.6+vnoise(x/11+50,z/11+7)*.28+vnoise(x/4.5+99,z/4.5+3)*.12;
+     let h=Math.floor(7+n*18);const m=vnoise(x/34+200,z/34+200);if(m>.58)h+=Math.floor((m-.58)*36);
+     h=Math.max(5,Math.min(SY-10,h));hm[z*SX+x]=h;
+     for(let y=0;y<=h;y++){let b;if(y===0)b=BEDROCK;else if(y<h-3)b=STONE;else if(h<=WL+1)b=SAND;else b=y===h?GRASS:DIRT;world[idx(x,y,z)]=b}
+     for(let y=h+1;y<=WL;y++)world[idx(x,y,z)]=WATER}}
+   if(gen.z>=SZ){gen.phase='villages';gen.v=0;villages=[]}
+   return}
+  if(gen.phase==='villages'){
+   msg('正在安放村庄…');
+   const NV=Math.max(6,Math.round(6*(SX*SZ)/(128*128)));
+   for(;gen.v<NV&&performance.now()-t0<B;gen.v++){let best=null,bs=1e9;
+    for(let t=0;t<100;t++){const cx=VR+3+Math.floor(R()*(SX-2*VR-6)),cz=VR+3+Math.floor(R()*(SZ-2*VR-6));
+     if(villages.some(o=>Math.hypot(o.x-cx,o.z-cz)<36))continue;
+     let sum=0,sum2=0,n=0,low=0;for(let dz=-VR;dz<=VR;dz+=2)for(let dx=-VR;dx<=VR;dx+=2){const h=hm[(cz+dz)*SX+cx+dx];sum+=h;sum2+=h*h;n++;if(h<=WL+1)low++}
+     const mean=sum/n,sc=sum2/n-mean*mean+low;if(mean<WL+1.5)continue;
+     if(sc<bs){bs=sc;best={x:cx,z:cz,h:Math.max(WL+2,Math.min(SY-12,Math.round(mean)))}}}
+    if(best)villages.push(best)}
+   if(gen.v>=NV){
+    for(const V of villages)for(let dz=-VR;dz<=VR;dz++)for(let dx=-VR;dx<=VR;dx++){const x=V.x+dx,z=V.z+dz;hm[z*SX+x]=V.h;for(let y=1;y<SY;y++)world[idx(x,y,z)]=y<V.h-3?STONE:y<V.h?DIRT:y===V.h?GRASS:AIR}
+    const vdist=new Uint8Array(SX*SZ);vdist.fill(255);
+    for(const V of villages){const rad=VR+4;for(let dz=-rad;dz<=rad;dz++){const z=V.z+dz;if(z<0||z>=SZ)continue;for(let dx=-rad;dx<=rad;dx++){const x=V.x+dx;if(x<0||x>=SX)continue;const d=Math.max(Math.abs(dx),Math.abs(dz)),i=z*SX+x;if(d<vdist[i])vdist[i]=d}}}
+    gen.nearV=(x,z,m)=>x>=0&&z>=0&&x<SX&&z<SZ&&vdist[z*SX+x]<=VR+m;
+    const A=gen.A;
+    gen.ores=[{n:Math.ceil(70*A),b:COAL,yr:20,n0:5,nr:5},{n:Math.ceil(45*A),b:IRON,yr:15,n0:3,nr:4},{n:Math.ceil(20*A),b:GOLD,yr:10,n0:3,nr:3},{n:Math.ceil(14*A),b:DIAMOND,yr:7,n0:2,nr:3}];
+    gen.phase='ores';gen.orePhase=0;gen.oreK=0}
+   return}
+  if(gen.phase==='ores'){
+   msg('正在埋藏矿石…');
+   const vein=(x,y,z,b,n)=>{for(let k=0;k<n;k++){if(get(x,y,z)===STONE)world[idx(x,y,z)]=b;const d=Math.floor(R()*6);if(d===0)x++;else if(d===1)x--;else if(d===2)y++;else if(d===3)y--;else if(d===4)z++;else z--}};
+   while(gen.orePhase<gen.ores.length&&performance.now()-t0<B){const sp=gen.ores[gen.orePhase];
+    while(gen.oreK<sp.n&&performance.now()-t0<B){vein(Math.floor(R()*SX),1+Math.floor(R()*sp.yr),Math.floor(R()*SZ),sp.b,sp.n0+Math.floor(R()*sp.nr));gen.oreK++}
+    if(gen.oreK>=sp.n){gen.orePhase++;gen.oreK=0}}
+   if(gen.orePhase>=gen.ores.length){gen.phase='caves';gen.worm=0;gen.worms=Math.round(70*gen.A/3.2);gen.carved=[]}
+   return}
+  if(gen.phase==='caves'){
+   msg('正在挖掘洞穴 '+gen.worm+'/'+gen.worms+' …');
+   const nearV=gen.nearV;
+   const carve=(cx,cy,cz,r)=>{const r2=r*r,ri=Math.ceil(r);
+    for(let dy=-ri;dy<=ri;dy++)for(let dz=-ri;dz<=ri;dz++)for(let dx=-ri;dx<=ri;dx++){if(dx*dx+dy*dy+dz*dz>r2)continue;
+     const x=Math.floor(cx+dx),y=Math.floor(cy+dy),z=Math.floor(cz+dz);
+     if(x<1||z<1||x>=SX-1||z>=SZ-1||y<2||y>=SY-1)continue;const i=idx(x,y,z),b=world[i];if(b===AIR||b===WATER||b===BEDROCK)continue;
+     if(world[idx(x,y+1,z)]===WATER||world[idx(x+1,y,z)]===WATER||world[idx(x-1,y,z)]===WATER||world[idx(x,y,z+1)]===WATER||world[idx(x,y,z-1)]===WATER)continue;
+     if(nearV(x,z,2))continue;world[i]=AIR;gen.carved.push(i)}};
+   while(gen.worm<gen.worms&&performance.now()-t0<B){const w=gen.worm++;
+    let x=4+R()*(SX-8),z=4+R()*(SZ-8);const surf=w%4===0;const hc=hm[Math.floor(z)*SX+Math.floor(x)];
+    if(surf&&(hc<=WL+1||nearV(Math.floor(x),Math.floor(z),3)))continue;
+    let y=surf?hc+1:4+R()*Math.max(2,hc-9);let yaw=R()*Math.PI*2,pit=surf?-.55:(R()-.5)*.4;const len=60+R()*100;
+    for(let s=0;s<len;s++){const r=1.3+(Math.sin(s*.13+w)+1)*.6+R()*.3;carve(x,y,z,r);
+     x+=Math.cos(yaw)*Math.cos(pit);z+=Math.sin(yaw)*Math.cos(pit);y+=Math.sin(pit);yaw+=(R()-.5)*.5;
+     if(surf&&s<14)pit=Math.min(-.4,pit*.9+(R()-.5)*.3);else pit=pit*.85+(R()-.5)*.35;
+     const hh=hm[Math.max(0,Math.min(SZ-1,Math.floor(z)))*SX+Math.max(0,Math.min(SX-1,Math.floor(x)))];
+     if(y<4){y=4;pit=Math.abs(pit)}if(!(surf&&s<14)&&y>hh-4){pit=-.3}
+     if(x<3||z<3||x>SX-3||z>SZ-3)break}}
+   if(gen.worm>=gen.worms){stats.caveCells=gen.carved.length;const deep=gen.carved.filter(i=>Math.floor(i/(SX*SZ))<8);stats.caveSample=deep.length?deep[Math.floor(deep.length/2)]:gen.carved[0];gen.phase='walls';gen.wall=0}
+   return}
+  if(gen.phase==='walls'){
+   msg('正在点缀洞穴矿石…');
+   const carved=gen.carved,N=carved.length;
+   while(gen.wall<N&&performance.now()-t0<B){const i0=gen.wall,i1=Math.min(N,i0+12000);gen.wall=i1;
+    for(let k=i0;k<i1;k++){const i=carved[k];const x=i%SX,z=Math.floor(i/SX)%SZ,y=Math.floor(i/(SX*SZ));
+     for(const [dx,dy,dz] of [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]]){if(get(x+dx,y+dy,z+dz)===STONE&&R()<.035){const r=R();world[idx(x+dx,y+dy,z+dz)]=y<7&&r<.18?DIAMOND:y<10&&r<.32?GOLD:r<.6?IRON:COAL}}}}
+   if(gen.wall>=N){gen.phase='shafts';gen.shaftK=0;gen.shaftN=Math.round(4*gen.A/3.2)+1;stats.shafts=0;
+    gen.corridor=(x,z,y0,dx,dz,len,depth)=>{for(let s=0;s<len;s++){const cx=x+dx*s,cz=z+dz*s;if(cx<3||cz<3||cx>SX-4||cz>SZ-4)return;if(gen.nearV(cx,cz,2))return;
+     for(let w=-1;w<=1;w++){const X=cx+dz*w,Z=cz+dx*w;if(hm[Z*SX+X]<y0+5)continue;for(let h=0;h<=2;h++)if(world[idx(X,y0+h,Z)]!==WATER)world[idx(X,y0+h,Z)]=AIR;world[idx(X,y0-1,Z)]=PLANKS}
+     if(s%4===0)for(const w of [-1,1]){const X=cx+dz*w,Z=cz+dx*w;if(hm[Z*SX+X]<y0+5)continue;world[idx(X,y0,Z)]=LOG;world[idx(X,y0+1,Z)]=LOG}
+     if(s%4===0)for(let w=-1;w<=1;w++){const X=cx+dz*w,Z=cz+dx*w;if(hm[Z*SX+X]>=y0+5)world[idx(X,y0+2,Z)]=PLANKS}
+     if(s%8===2){const X=cx+dz,Z=cz+dx;if(world[idx(X,y0,Z)]===AIR){world[idx(X,y0,Z)]=TORCH;torches.add(idx(X,y0,Z))}}
+     if(depth>0&&s%11===6&&R()<.7){const sd=R()<.5?1:-1;gen.corridor(cx+dz*sd*2,cz+dx*sd*2,y0,dz*sd,dx*sd,12+Math.floor(R()*20),depth-1)}}};}
+   return}
+  if(gen.phase==='shafts'){
+   msg('正在修建矿井…');
+   while(gen.shaftK<gen.shaftN&&performance.now()-t0<B){const x=12+Math.floor(R()*(SX-24)),z=12+Math.floor(R()*(SZ-24)),y0=5+Math.floor(R()*5);gen.shaftK++;
+    if(gen.nearV(x,z,4))continue;stats.shafts++;const dir=R()<.5;
+    gen.corridor(x,z,y0,dir?1:0,dir?0:1,24+Math.floor(R()*24),2);gen.corridor(x,z,y0,dir?-1:0,dir?0:-1,12+Math.floor(R()*20),1)}
+   if(gen.shaftK>=gen.shaftN){gen.phase='surface';gen.surfK=0;gen.surfN=Math.ceil(10*gen.A)}
+   return}
+  if(gen.phase==='surface'){
+   msg('正在撒地表矿…');
+   while(gen.surfK<gen.surfN&&performance.now()-t0<B){const x=2+Math.floor(R()*(SX-4)),z=2+Math.floor(R()*(SZ-4)),h=hm[z*SX+x];gen.surfK++;
+    if(h>WL+1&&!gen.nearV(x,z,1)&&world[idx(x,h,z)]===GRASS){world[idx(x,h-1,z)]=[COAL,COAL,IRON,IRON,GOLD,DIAMOND][Math.floor(R()*6)];world[idx(x,h,z)]=AIR}}
+   if(gen.surfK>=gen.surfN){gen.phase='trees';gen.treeZ=3}
+   return}
+  if(gen.phase==='trees'){
+   msg('正在种树 '+gen.treeZ+'/'+SZ+' …');
+   const nearV=gen.nearV;
+   while(gen.treeZ<SZ-3&&performance.now()-t0<B){const z=gen.treeZ++;
+    for(let x=3;x<SX-3;x++){const h=hm[z*SX+x];if(world[idx(x,h,z)]!==GRASS||R()>.022||nearV(x,z,4))continue;
+     let ok=true;for(let dz=-2;dz<=2&&ok;dz++)for(let dx=-2;dx<=2;dx++)if(get(x+dx,h+1,z+dz)===LOG){ok=false;break}if(!ok)continue;
+     const th=4+Math.floor(R()*2),top=h+th;if(top+2>=SY)continue;
+     for(let y=top-2;y<=top+1;y++){const r=y>=top?1:2;for(let dz=-r;dz<=r;dz++)for(let dx=-r;dx<=r;dx++){if(Math.abs(dx)===r&&Math.abs(dz)===r&&(y===top+1||R()<.5))continue;if(get(x+dx,y,z+dz)===AIR)world[idx(x+dx,y,z+dz)]=LEAVES}}
+     world[idx(x,h,z)]=DIRT;for(let y=h+1;y<=top;y++)world[idx(x,y,z)]=LOG}}
+   if(gen.treeZ>=SZ-3){gen.phase='builds';gen.bld=0}
+   return}
+  if(gen.phase==='builds'){
+   msg('正在建造村庄房屋…');
+   while(gen.bld<villages.length&&performance.now()-t0<B)buildVillage(villages[gen.bld++],R);
+   if(gen.bld>=villages.length){gen.phase='light';gen.lz=0}
+   return}
+  if(gen.phase==='light'){
+   msg('正在计算光照 '+gen.lz+'/'+SZ+' …');
+   while(gen.lz<SZ&&performance.now()-t0<B){const z=gen.lz++;for(let x=0;x<SX;x++)calcTop(x,z)}
+   if(gen.lz>=SZ)finishWorldSpawn();
+   return}
+ }catch(err){gen=null;const ov=$('genOv');if(ov)ov.classList.add('hidden');toast('世界生成失败：'+(err&&err.message||err));state='menu'}
+}
+
 function buildVillage(V,R){const h=V.h,S=(x,y,z,b)=>{if(inB(x,y,z))world[idx(x,y,z)]=b};
  for(let d=-VR;d<=VR;d++){S(V.x+d,h,V.z,GRAVEL);S(V.x,h,V.z+d,GRAVEL)}
  for(let dz=-2;dz<=2;dz++)for(let dx=-2;dx<=2;dx++)S(V.x+dx,h,V.z+dz,GRAVEL);
@@ -540,7 +618,7 @@ function makeZombie(x,y,z){const g=new THREE.Group(),mats=[];const lam=o=>{const
 function removeZombie(zb){scene.remove(zb.mesh);zb.mesh.traverse(o=>{if(o.geometry)o.geometry.dispose()});zb.mats.forEach(m=>m.dispose());const i=zombies.indexOf(zb);if(i>=0)zombies.splice(i,1)}
 const inVillage=(x,z,m=2)=>villages.some(V=>Math.abs(x-V.x)<=VR+m&&Math.abs(z-V.z)<=VR+m);
 function surfaceSpot(cx,cz,minD,maxD,avoidVillage){for(let tries=0;tries<60;tries++){const a=Math.random()*Math.PI*2,r=minD+Math.random()*(maxD-minD);const x=Math.floor(cx+Math.cos(a)*r),z=Math.floor(cz+Math.sin(a)*r);if(x<1||z<1||x>=SX-1||z>=SZ-1)continue;
- const t=colTop[z*SX+x];const b=get(x,t,z);if(b===WATER||b===LEAVES||t<0||t>SY-4)continue;if(avoidVillage&&inVillage(x,z))continue;if(solidAt(x,t+1,z)||solidAt(x,t+2,z)||solidAt(x,t+3,z))continue;return{x:x+.5,y:t+1,z:z+.5}}return null}
+ const t=standColumn(x,z);const b=get(x,t,z);if(b===WATER||b===LEAVES||t<0||t>SY-4)continue;if(avoidVillage&&inVillage(x,z))continue;if(solidAt(x,t+1,z)||solidAt(x,t+2,z)||solidAt(x,t+3,z))continue;return{x:x+.5,y:t+1,z:z+.5}}return null}
 function spawnZombie(minD=18){const s=surfaceSpot(P.pos.x,P.pos.z,minD,minD+22,true);return s?makeZombie(s.x,s.y,s.z):null}
 function zTarget(){return Math.min(10,5+Math.floor(gameTime/40))}
 function updZombies(dt){
@@ -620,7 +698,7 @@ function updNpcs(dt){for(const n of [...npcs]){
  n.mesh.position.copy(n.pos);n.walk+=dt*mv*3;const sw=Math.sin(n.walk)*.5*(mv>.1?1:0);n.legs[0].rotation.x=sw;n.legs[1].rotation.x=-sw;
  if(n.arms.length){n.arms[0].rotation.x=-sw*.6-n.atk*1.6;n.arms[1].rotation.x=sw*.6-n.atk*1.6}
  n.mats.forEach(m=>m.emissive.setHex(n.flash>0?0x553333:0));
- if(n.pos.y<-8){const t=colTop[Math.floor(V.z)*SX+Math.floor(V.x)];n.pos.set(V.x+.5,t+1,V.z+.5);n.vel.set(0,0,0)}
+ if(n.pos.y<-8){const t=standColumn(V.x,V.z);n.pos.set(V.x+.5,t+1,V.z+.5);n.vel.set(0,0,0)}
 }}
 
 // ================= white iron golems (peaceful, separate from hostile golems) =================
@@ -636,7 +714,7 @@ function makeWGolem(x,y,z){const g=new THREE.Group(),mats=[];const lam=o=>{const
  const n={pos:new THREE.Vector3(x,y,z),vel:new THREE.Vector3(),hw:.45,h:2.6,onGround:false,blocked:false,mesh:g,mats,legs,arms,walk:0,home:{x,z,h:y-1},target:null,wait:Math.random()*3,stuck:0,kb:0,flash:0,face:Math.random()*6,hp:4};
  wGolems.push(n);return n}
 function removeWGolem(n){scene.remove(n.mesh);n.mesh.traverse(o=>{if(o.geometry)o.geometry.dispose()});n.mats.forEach(m=>m.dispose());const i=wGolems.indexOf(n);if(i>=0)wGolems.splice(i,1)}
-function randomSurface(minPd=0){for(let tries=0;tries<80;tries++){const x=2+rnd(SX-4),z=2+rnd(SZ-4);const t=colTop[z*SX+x],b=get(x,t,z);if(b===WATER||b===LEAVES||t<0||t>SY-5)continue;if(solidAt(x,t+1,z)||solidAt(x,t+2,z)||solidAt(x,t+3,z))continue;if(minPd&&Math.hypot(x+.5-P.pos.x,z+.5-P.pos.z)<minPd)continue;return{x:x+.5,y:t+1,z:z+.5}}return null}
+function randomSurface(minPd=0){for(let tries=0;tries<80;tries++){const x=2+rnd(SX-4),z=2+rnd(SZ-4);const t=standColumn(x,z),b=get(x,t,z);if(b===WATER||b===LEAVES||t<0||t>SY-5)continue;if(solidAt(x,t+1,z)||solidAt(x,t+2,z)||solidAt(x,t+3,z))continue;if(minPd&&Math.hypot(x+.5-P.pos.x,z+.5-P.pos.z)<minPd)continue;return{x:x+.5,y:t+1,z:z+.5}}return null}
 function spawnWhiteGolems(n){for(let k=0;k<n&&wGolems.length<WG_MAX;k++){const s=randomSurface(0);if(s)makeWGolem(s.x,s.y,s.z)}}
 function hitWGolem(n,dmg,byPlayer){if(wGolems.indexOf(n)<0)return;n.hp-=dmg;n.flash=.25;if(byPlayer){const dx=n.pos.x-P.pos.x,dz=n.pos.z-P.pos.z,d=Math.hypot(dx,dz)||1;n.vel.set(dx/d*3,3,dz/d*3);n.kb=.25;snd('clank')}
  if(n.hp<=0){const p=n.pos.clone();burst(p.x-.5,p.y+.6,p.z-.5,0xf4f8ff,16);burst(p.x-.5,p.y+1.4,p.z-.5,0xc8d0d8,8);removeWGolem(n);snd('clank');
@@ -657,7 +735,7 @@ function updWGolems(dt){wgTimer-=dt;if(!worldWrecked&&wGolems.length<WG_TARGET&&
   n.mesh.position.copy(n.pos);n.walk+=dt*mv*3;const sw=Math.sin(n.walk)*.5*(mv>.1?1:0);n.legs[0].rotation.x=sw;n.legs[1].rotation.x=-sw;
   if(n.arms.length){n.arms[0].rotation.x=-sw*.6;n.arms[1].rotation.x=sw*.6}
   n.mats.forEach(m=>m.emissive.setHex(n.flash>0?0x6688aa:0));
-  if(n.pos.y<-8){const t=colTop[Math.max(0,Math.min(SZ-1,Math.floor(V.z)))*SX+Math.max(0,Math.min(SX-1,Math.floor(V.x)))];n.pos.set(V.x,t+1,V.z);n.vel.set(0,0,0)}}}
+  if(n.pos.y<-8){const t=standColumn(V.x,V.z);n.pos.set(V.x,t+1,V.z);n.vel.set(0,0,0)}}}
 // ================= creepers =================
 function crTex(face){const cv=document.createElement('canvas');cv.width=cv.height=16;const c=cv.getContext('2d');noise(c,[70,160,55],28);if(face){c.fillStyle='#101810';c.fillRect(3,5,3,3);c.fillRect(10,5,3,3);c.fillRect(6,10,4,2);c.fillRect(5,11,1,2);c.fillRect(10,11,1,2)}const t=new THREE.CanvasTexture(cv);t.magFilter=t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;return t}
 const CRSKIN=crTex(false),CRFACE=crTex(true);
@@ -707,7 +785,7 @@ function updOrbs(dt){oTimer-=dt;const cap=Math.min(5,2+Math.floor(gameTime/60));
   if(pd>90){removeOrb(o);continue}if(pd>VIEW-16){o.mesh.visible=false;continue}o.mesh.visible=true;
   o.cd-=dt;o.flash-=dt;
   const gx=Math.max(0,Math.min(SX-1,Math.floor(o.pos.x))),gz=Math.max(0,Math.min(SZ-1,Math.floor(o.pos.z)));
-  const typ=colTop[gz*SX+gx]+2.15+Math.sin(gameTime*2+o.bob)*.35;if(!(o.attractT>0))o.pos.y+=(typ-o.pos.y)*Math.min(1,dt*3);
+  const typ=standColumn(gx,gz)+2.15+Math.sin(gameTime*2+o.bob)*.35;if(!(o.attractT>0))o.pos.y+=(typ-o.pos.y)*Math.min(1,dt*3);
   const foe=nearestOrb(o,28);
   if(o.attractT>0){/* gravity pull overrides orb drift */}else if(foe){const dx=foe.pos.x-o.pos.x,dz=foe.pos.z-o.pos.z,fd=Math.hypot(dx,dz)||1;const sp=fd>6?1.6:fd<3?-0.6:.2;o.pos.x+=dx/fd*sp*dt;o.pos.z+=dz/fd*sp*dt}
   let aim=foe?foe.pos:null,aimD=foe?o.pos.distanceTo(foe.pos):1e9;
@@ -736,14 +814,9 @@ function updDrops(dt){for(let i=drops.length-1;i>=0;i--){const d=drops[i];d.t+=d
   triggerAttract('pickup',true)}}}
 // ================= game state =================
 let state='menu',locked=false,noLock=false,dragging=false;const keys={};
-function findSpawn(){const cx=SX>>1,cz=SZ>>1;for(let r=0;r<SX;r++)for(let dz=-r;dz<=r;dz++)for(let dx=-r;dx<=r;dx++){if(Math.max(Math.abs(dx),Math.abs(dz))!==r)continue;const x=cx+dx,z=cz+dz;if(x<1||z<1||x>=SX-1||z>=SZ-1)continue;const t=colTop[z*SX+x];const b=get(x,t,z);if(b===GRASS||b===SAND||b===DIRT)return new THREE.Vector3(x+.5,t+1,z+.5)}return new THREE.Vector3(cx+.5,SY-2,cz+.5)}
+function findSpawn(){const cx=SX>>1,cz=SZ>>1;for(let r=0;r<Math.max(SX,SZ);r++)for(let dz=-r;dz<=r;dz++)for(let dx=-r;dx<=r;dx++){if(Math.max(Math.abs(dx),Math.abs(dz))!==r)continue;const x=cx+dx,z=cz+dz;if(x<1||z<1||x>=SX-1||z>=SZ-1)continue;const t=colTop[z*SX+x];const b=get(x,t,z);if(b===GRASS||b===SAND||b===DIRT)return new THREE.Vector3(x+.5,t+1,z+.5)}return new THREE.Vector3(cx+.5,SY-2,cz+.5)}
 function respawn(){P.pos.copy(spawn);P.vel.set(0,0,0);P.hp=10;P.lastHurt=gameTime;const V=villages[0];P.yaw=V?Math.atan2(-(V.x+.5-spawn.x),-(V.z+.5-spawn.z)):Math.PI*.75;P.pitch=-.15}
 function clearAllMobs(){while(zombies.length)removeZombie(zombies[0]);while(npcs.length)removeNpc(npcs[0]);while(wGolems.length)removeWGolem(wGolems[0]);while(creepers.length)removeCreeper(creepers[0]);while(orbs.length)removeOrb(orbs[0]);while(bolts.length)removeBolt(bolts[0]);while(drops.length){const d=drops.pop();scene.remove(d.mesh)}clearFlyBlocks();zTimer=999;cTimer=8;oTimer=6;wgTimer=0}
-function newWorld(){worldWrecked=false;endDongfeng();genWorld();chunks.forEach(discardChunk);clearAllMobs();
- spawn=villages.length?new THREE.Vector3(villages[0].x+.5,villages[0].h+1,villages[0].z+8.5):findSpawn();
- gameTime=0;zTimer=0;mined=kills=diamonds=golemKills=golemDeaths=0;respawn();resetInv();
- camera.position.set(spawn.x,spawn.y+8,spawn.z);buildAround(spawn.x,spawn.z,VIEW+20);
- villages.forEach(spawnVillageMobs);spawnWorldGolems(24);spawnWhiteGolems(WG_TARGET);for(let i=0;i<4;i++)spawnZombie(20);spawnCreeper(22);spawnCreeper(28);spawnOrb(24);spawnOrb(30)}
 function die(msg){state='dead';$('deadMsg').textContent=msg+'  Zombies defeated: '+kills+' · Blocks mined: '+mined;$('dead').classList.remove('hidden');if(document.pointerLockElement)document.exitPointerLock()}
 const cvs=renderer.domElement;
 function lock(){if(noLock)return;try{const r=cvs.requestPointerLock();if(r&&r.catch)r.catch(()=>{})}catch(e){}}
@@ -765,10 +838,10 @@ document.querySelectorAll('.ctrl-btn').forEach(el=>{el.addEventListener('click',
 if($('creativeBtn'))$('creativeBtn').onclick=e=>{e.stopPropagation();setCreative(!creative)};
 if($('flyBtn'))$('flyBtn').onclick=e=>{e.stopPropagation();if(creative)setFlying(!flying)};
 if($('closeSub2'))$('closeSub2').onclick=e=>{e.stopPropagation();closeSub2()};
-function startPlay(){$('hud').style.display='';['menu','pause','dead','craft'].forEach(i=>$(i).classList.add('hidden'));if(sub2Open)closeSub2();state='play';if(touchMode){noLock=true;if(document.pointerLockElement)document.exitPointerLock()}else lock();unlockAudio()}
+function startPlay(){if(gen){playAfterGen=true;toast('世界还在生成，好了就进入');return}$('hud').style.display='';['menu','pause','dead','craft','laptopDlg','genOv'].forEach(i=>{const e=$(i);if(e)e.classList.add('hidden')});if(sub2Open)closeSub2();state='play';if(touchMode){noLock=true;if(document.pointerLockElement)document.exitPointerLock()}else lock();unlockAudio()}
 $('playBtn').onclick=startPlay;$('resumeBtn').onclick=startPlay;$('closeCraft').onclick=startPlay;
 $('respawnBtn').onclick=()=>{respawn();startPlay()};
-$('newBtn').onclick=$('newBtn2').onclick=()=>{newWorld();startPlay()};
+$('newBtn').onclick=$('newBtn2').onclick=()=>{playAfterGen=true;newWorld()};
 document.addEventListener('pointerlockchange',()=>{locked=document.pointerLockElement===cvs;if(!locked&&state==='play'&&!touchMode&&!noLock&&!sub2Open){state='pause';$('pause').classList.remove('hidden');for(const k in keys)keys[k]=false;breakHold=placeHold=false}});
 document.addEventListener('pointerlockerror',()=>{noLock=true});
 document.addEventListener('mousemove',e=>{if(state!=='play')return;if(locked||(noLock&&dragging)){P.yaw-=e.movementX*.0024;P.pitch=Math.max(-1.55,Math.min(1.55,P.pitch-e.movementY*.0024))}});
@@ -782,9 +855,10 @@ addEventListener('wheel',e=>{if(state==='play')select(sel+(e.deltaY>0?1:-1))},{p
 addEventListener('keydown',e=>{if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();
  if(sub2Open){if(e.code==='Escape'||e.code==='KeyE')closeSub2();if(e.code==='Space'&&!e.repeat)noteJumpTap();if(e.code==='Escape'||e.code==='KeyE')return}
  if(state==='craft'){if(e.code==='KeyE'||e.code==='Escape')startPlay();return}
- if(e.code==='KeyR'&&state!=='menu'){newWorld();startPlay();return}
+ if(state==='laptop'){if(e.code==='KeyE'||e.code==='Escape')closeLaptop();return}
+ if(e.code==='KeyR'&&state!=='menu'&&state!=='gen'){playAfterGen=true;newWorld();return}
  if(state==='menu'&&(e.code==='Enter'||e.code==='Space')){startPlay();return}
- if(e.code==='KeyE'&&state==='play'){openCraft();return}
+ if(e.code==='KeyE'&&state==='play'){interact();return}
  if(e.code==='Escape'&&state==='play'&&!locked){state='pause';$('pause').classList.remove('hidden');return}
  if(e.code==='Space'&&!e.repeat)noteJumpTap();
  keys[e.code]=true;if(state==='play'&&/^Digit[1-9]$/.test(e.code))select(+e.code[5]-1)});
@@ -807,8 +881,12 @@ bindHold($('btnJump'),()=>{keys.Space=true;noteJumpTap()},()=>{keys.Space=false}
 bindHold($('btnDown'),()=>{flyDown=true;keys.KeyC=true},()=>{flyDown=false;keys.KeyC=false});
 bindHold($('btnMine'),()=>{if(state==='play'){breakHold=true;actT=0;mineP=0;mineKey='';swing=1}},()=>{breakHold=false;mineP=0});
 bindHold($('btnPlace'),()=>{if(state==='play'){placeHold=true;placeT=.25;doPlace()}},()=>{placeHold=false});
-if($('btnCraft'))$('btnCraft').onclick=()=>{unlockAudio();if(state==='play')openCraft();else if(state==='craft')startPlay()};
-if($('btnNew'))$('btnNew').onclick=()=>{unlockAudio();newWorld();startPlay()};
+if($('btnCraft'))$('btnCraft').onclick=()=>{unlockAudio();interact()};
+if($('btnUse'))$('btnUse').onclick=()=>{unlockAudio();if(nearLaptop())openLaptop();else toast('请走近笔记本电脑')};
+if($('lapYes'))$('lapYes').onclick=()=>chooseLaptop(true);
+if($('lapNo'))$('lapNo').onclick=()=>chooseLaptop(false);
+if($('lapCancel'))$('lapCancel').onclick=()=>closeLaptop();
+if($('btnNew'))$('btnNew').onclick=()=>{unlockAudio();playAfterGen=true;newWorld()};
 document.addEventListener('touchstart',e=>{lastTouch=performance.now();unlockAudio();if(!touchMode)enableTouch();if(state!=='play')return;
  for(const t of e.changedTouches){const el=document.elementFromPoint(t.clientX,t.clientY);const onJoy=el&&el.closest&&el.closest('#joyBase');if(uiAt(t.clientX,t.clientY)&&!onJoy)continue;
   if(onJoy||(t.clientX<innerWidth*.48&&!uiAt(t.clientX,t.clientY))){if(!joy.active){joy.active=true;joy.id=t.identifier;setJoy(t.clientX,t.clientY);e.preventDefault()}}
@@ -900,7 +978,7 @@ function handleMining(dt){actT-=dt;const a=aimInfo();
  if(actT>0)return;mineP+=dt/t;swing=Math.max(swing,.5);if(mineP>=1){breakBlock(hit);mineP=0;mineKey='';actT=.12}}
 let missileCd=0,camShake=0,worldWrecked=false,dfLaunch=null;
 function endDongfeng(){if(!dfLaunch)return;if(dfLaunch.mesh){scene.remove(dfLaunch.mesh);dfLaunch.mesh.traverse(o=>{if(o.geometry)o.geometry.dispose()})}dfLaunch=null}
-function wipeWorld(){world.fill(0);colTop.fill(-1);torches.clear();worldWrecked=true;chunks.forEach(discardChunk);clearAllMobs();zTimer=cTimer=oTimer=wgTimer=1e9}
+function wipeWorld(){xform=null;world.fill(0);colTop.fill(-1);torches.clear();worldWrecked=true;chunks.forEach(discardChunk);clearAllMobs();if(laptop&&laptop.mesh)laptop.mesh.visible=false;zTimer=cTimer=oTimer=wgTimer=1e9}
 function detonateDongfeng(){endDongfeng();snd('boom');setTimeout(()=>{try{snd('boom')}catch(e){}},90);setTimeout(()=>{try{snd('boom')}catch(e){}},180);
  let flash=$('blastFlash');if(!flash){flash=document.createElement('div');flash.id='blastFlash';flash.style.cssText='position:fixed;inset:0;pointer-events:none;background:#fff;opacity:0;z-index:18;transition:opacity .4s';document.body.appendChild(flash)}
  flash.style.transition='opacity .15s';flash.style.background='#fff';flash.style.opacity='1';setTimeout(()=>{flash.style.transition='opacity .6s';flash.style.opacity='0'},220);
@@ -966,7 +1044,7 @@ function update(dt){
  const mb=$('mineBar');mb.style.display=breakHold&&mineP>0?'block':'none';mb.firstChild.style.width=Math.min(100,mineP*100)+'%';
 }
 function updCamera(dt){
- if(state==='menu'){const V=villages[0]||{x:SX/2,z:SZ/2,h:WL};const t=performance.now()/1000*.07;camera.position.set(V.x+Math.cos(t)*30,V.h+14,V.z+Math.sin(t)*30);camera.lookAt(V.x,V.h+1,V.z);return}
+ if(state==='menu'||state==='gen'){const V=villages[0]||{x:SX/2,z:SZ/2,h:WL};const t=performance.now()/1000*.07;camera.position.set(V.x+Math.cos(t)*30,V.h+14,V.z+Math.sin(t)*30);camera.lookAt(V.x,V.h+1,V.z);return}
  const sp=Math.hypot(P.vel.x,P.vel.z),bob=P.onGround?Math.sin(gameTime*11)*.045*Math.min(1,sp/5):0;
  camera.position.set(P.pos.x,P.pos.y+1.62+bob,P.pos.z);camera.rotation.set(P.pitch,P.yaw,0);
  if(camShake>0){const k=camShake;camera.position.x+=(Math.random()-.5)*k*.7;camera.position.y+=(Math.random()-.5)*k*.5;camera.position.z+=(Math.random()-.5)*k*.7;camera.rotation.z=(Math.random()-.5)*k*.06;camShake=Math.max(0,camShake-dt*2.4)}else if(camera.rotation.z)camera.rotation.z=0;
@@ -976,14 +1054,164 @@ function updCamera(dt){
  $('water').style.display=uw?'block':'none';const fc=uw?WATERFOG:under?CAVEFOG:SKY;scene.fog.color.lerp(fc,Math.min(1,dt*4));scene.background.copy(scene.fog.color);scene.fog.near=uw?1:under?(touchMode?6:8):(touchMode?16:28);scene.fog.far=uw?(touchMode?10:14):under?(touchMode?24:40):(touchMode?46:70);
  swing=Math.max(0,swing-dt*5);handGroup.rotation.set(-Math.sin(swing*Math.PI)*.6,0,0);handGroup.position.y=-.6+bob*.6-Math.sin(swing*Math.PI)*.08;
 }
+// ================= laptop + bulk terrain transform =================
+const LAP_REACH=3.1;
+function playerBox(){return {x0:P.pos.x-P.hw,x1:P.pos.x+P.hw,z0:P.pos.z-P.hw,z1:P.pos.z+P.hw,y0:P.pos.y+.05,y1:P.pos.y+P.h-.02}}
+function overlapsPlayer(x,y,z,box){
+ box=box||playerBox();
+ if(!Number.isFinite(box.x0)||!Number.isFinite(box.y0)||!Number.isFinite(box.z0))return false;
+ return x+1>box.x0&&x<box.x1&&z+1>box.z0&&z<box.z1&&y+1>box.y0&&y<box.y1;
+}
+function makeLaptopMesh(){
+ const g=new THREE.Group();
+ const mat=c=>new THREE.MeshBasicMaterial({color:c});
+ const add=(w,h,d,color,x,y,z)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(color));m.position.set(x,y,z);g.add(m);return m};
+ add(1.28,.08,.9,0x2a2e36,0,.04,0);
+ add(1.12,.04,.62,0x16191e,0,.09,.1);
+ add(.96,.02,.4,0x454b56,0,.115,.12);
+ add(.28,.015,.18,0xaeb6c4,0,.128,.32);
+ add(1.24,.06,.08,0x0e1116,0,.1,-.34);
+ const scr=new THREE.Group();scr.position.set(0,.12,-.34);scr.rotation.x=.62;g.add(scr);
+ const panel=new THREE.Mesh(new THREE.BoxGeometry(1.2,.78,.05),mat(0x12151b));panel.position.set(0,.4,0);scr.add(panel);
+ const display=new THREE.Mesh(new THREE.BoxGeometry(1.04,.62,.02),mat(0x3ecbff));display.position.set(0,.42,.03);scr.add(display);
+ const win=new THREE.Mesh(new THREE.BoxGeometry(.32,.2,.012),mat(0xf4fbff));win.position.set(-.22,.52,.045);scr.add(win);
+ g.scale.setScalar(1.35);
+ return g;
+}
+function placeLaptop(){
+ try{
+  if(laptop&&laptop.mesh){scene.remove(laptop.mesh);laptop.mesh.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material&&o.material.dispose)o.material.dispose()})}
+  const x=spawn.x,z=spawn.z-2.2;
+  const gx=Math.max(0,Math.min(SX-1,Math.floor(x))),gz=Math.max(0,Math.min(SZ-1,Math.floor(z)));
+  let gy=standColumn(gx,gz);if(gy<0)gy=Math.max(0,Math.floor(spawn.y)-1);
+  const mesh=makeLaptopMesh();
+  mesh.position.set(gx+.5,gy+1.01,gz+.5);
+  mesh.rotation.y=Math.atan2(spawn.x-mesh.position.x,spawn.z-mesh.position.z);
+  scene.add(mesh);
+  laptop={mesh,x:mesh.position.x,y:mesh.position.y,z:mesh.position.z};
+ }catch(err){laptop=null;toast('笔记本电脑放置失败：'+(err&&err.message||err))}
+}
+function nearLaptop(){
+ if(!laptop||!laptop.mesh||!laptop.mesh.visible||worldWrecked||gen)return false;
+ const dx=P.pos.x-laptop.x,dz=P.pos.z-laptop.z,dy=(P.pos.y+.2)-laptop.y;
+ return dx*dx+dz*dz<LAP_REACH*LAP_REACH&&Math.abs(dy)<3;
+}
+function updateLapUI(){
+ const near=!!(nearLaptop()&&(state==='play'||state==='laptop'));
+ document.body.classList.toggle('near-lap',near&&state==='play');
+ const h=$('lapHint');
+ if(h){h.style.display=near&&state==='play'?'block':'none';h.textContent=touchMode?'点「使用电脑」。是＝钻石块，否＝玻璃块':'按 E 使用笔记本电脑。是＝钻石块，否＝玻璃块'}
+ const b=$('btnCraft');if(b&&touchMode)b.textContent=(near&&state==='play')?'使用电脑':'Craft';
+}
+function openLaptop(){
+ try{
+  if(xform){toast('世界正在变换，请稍候');return}
+  if(!laptop)throw new Error('找不到笔记本电脑');
+  state='laptop';
+  const p=$('laptopDlg');if(p)p.classList.remove('hidden');
+  for(const k in keys)keys[k]=false;breakHold=placeHold=false;
+  if(document.pointerLockElement)document.exitPointerLock();
+  updateLapUI();
+ }catch(err){toast('无法打开笔记本电脑：'+(err&&err.message||err))}
+}
+function closeLaptop(){
+ const p=$('laptopDlg');if(p)p.classList.add('hidden');
+ if(state==='laptop')state='play';
+ updateLapUI();
+ if(state==='play'&&!touchMode&&!noLock)lock();
+}
+function chooseLaptop(yes){
+ try{
+  if(gen)throw new Error('世界还在生成');
+  if(xform)throw new Error('上一次变换还没结束');
+  if(!Number.isFinite(P.pos.x)||!Number.isFinite(P.pos.y)||!Number.isFinite(P.pos.z))throw new Error('玩家位置无效');
+  const target=yes?DBLK:GLASS;
+  if(!BD[target])throw new Error('目标方块不存在');
+  closeLaptop();
+  xform={target,phase:'fill',y:0,z:0,changed:0,cleared:0,box:playerBox()};
+  toast(yes?'开始把全部非空气方块变成钻石块…':'开始把全部非空气方块变成玻璃块…');
+  return true;
+ }catch(err){toast('变换没有开始：'+(err&&err.message||err));return false}
+}
+function convertIndex(i,y,z,x,target){
+ const b=world[i];if(!b)return;
+ if(overlapsPlayer(x,y,z,xform.box)){world[i]=AIR;xform.cleared++;return}
+ world[i]=target;xform.changed++;
+}
+function stepTransform(maxMs){
+ if(!xform)return false;
+ const limit=maxMs==null?8:maxMs,t0=performance.now();
+ try{
+  while(xform&&xform.phase==='fill'&&performance.now()-t0<limit){
+   const y=xform.y,z0=xform.z,z1=Math.min(SZ,z0+48);const target=xform.target;
+   for(let z=z0;z<z1;z++){let i=(y*SZ+z)*SX;for(let x=0;x<SX;x++,i++)convertIndex(i,y,z,x,target)}
+   xform.z=z1;if(xform.z>=SZ){xform.z=0;xform.y++;if(xform.y>=SY){xform.phase='top';torches.clear()}}}
+  while(xform&&xform.phase==='top'&&performance.now()-t0<limit){
+   const z1=Math.min(SZ,xform.z+8);
+   for(let z=xform.z;z<z1;z++)for(let x=0;x<SX;x++)calcTop(x,z);
+   xform.z=z1;if(xform.z>=SZ)xform.phase='mesh'}
+  if(xform&&xform.phase==='mesh'){
+   const changed=xform.changed,cleared=xform.cleared,target=xform.target;
+   chunks.forEach(ch=>{if(ch.built)discardChunk(ch)});
+   xform=null;meshBoost=70;
+   try{rescuePlayer()}catch(err){toast('玩家保护失败：'+(err&&err.message||err))}
+   toast((target===DBLK?'已变成钻石块':'已变成玻璃块')+'（'+changed+' 块，腾出 '+cleared+'）');
+   return false}
+  return !!xform;
+ }catch(err){xform=null;toast('变换失败：'+(err&&err.message||err));return false}
+}
+function finishTransform(){let guard=0;while(xform&&guard++<10000)stepTransform(80);return !xform}
+function rescuePlayer(){
+ const x0=Math.floor(P.pos.x-P.hw),x1=Math.floor(P.pos.x+P.hw);
+ const z0=Math.floor(P.pos.z-P.hw),z1=Math.floor(P.pos.z+P.hw);
+ const y0=Math.floor(P.pos.y+.05),y1=Math.floor(P.pos.y+P.h-.02);
+ for(let y=y0;y<=y1;y++)for(let z=z0;z<=z1;z++)for(let x=x0;x<=x1;x++)if(inB(x,y,z)&&solidAt(x,y,z))setBlock(x,y,z,AIR,true);
+ flushDirty();
+}
+function interact(){
+ try{
+  if(state==='laptop'){closeLaptop();return 'close-laptop'}
+  if(state==='craft'){startPlay();return 'close-craft'}
+  if(state==='play'&&nearLaptop()){openLaptop();return 'laptop'}
+  if(state==='play'){openCraft();return 'craft'}
+  return state;
+ }catch(err){toast('操作失败：'+(err&&err.message||err));return 'error'}
+}
+function auditBlocks(target){let match=0,air=0,other=0;for(let i=0;i<world.length;i++){const b=world[i];if(b===AIR)air++;else if(b===target)match++;else other++}return {match,air,other,n:world.length}}
+function chunkIndexCount(cx,cz){
+ const ch=chunks[cz*NCX+cx];
+ if(!ch||!ch.built)return 0;
+ const a=ch.o.geometry&&ch.o.geometry.index?ch.o.geometry.index.count:0;
+ const b=ch.w.geometry&&ch.w.geometry.index?ch.w.geometry.index.count:0;
+ return a+b;
+}
+function finishWorldSpawn(){
+ try{
+  stats.genMs=Math.round(performance.now()-((gen&&gen.t0)||performance.now()));
+  spawn=villages.length?new THREE.Vector3(villages[0].x+.5,villages[0].h+1,villages[0].z+8.5):findSpawn();
+  gameTime=0;zTimer=0;mined=kills=diamonds=golemKills=golemDeaths=0;respawn();resetInv();
+  placeLaptop();
+  camera.position.set(spawn.x,spawn.y+8,spawn.z);buildAround(spawn.x,spawn.z,VIEW+20);
+  villages.forEach(spawnVillageMobs);spawnWorldGolems(24);spawnWhiteGolems(WG_TARGET);
+  for(let i=0;i<4;i++)spawnZombie(20);spawnCreeper(22);spawnCreeper(28);spawnOrb(24);spawnOrb(30);
+  const wantPlay=playAfterGen;playAfterGen=false;gen=null;
+  const ov=$('genOv');if(ov)ov.classList.add('hidden');
+  toast('世界已生成 '+SX+'×'+SZ+'，出生点北面有笔记本电脑');
+  if(wantPlay)startPlay();else if(state==='gen')state='menu';
+ }catch(err){gen=null;const ov=$('genOv');if(ov)ov.classList.add('hidden');toast('世界生成失败：'+(err&&err.message||err));state='menu'}
+}
+function newWorld(){beginGen()}
+
 // ================= loop =================
 let last=performance.now(),frames=0,stopAt=Infinity,fpsT=0,fpsN=0,fps=0;
 function frame(now){frames++;if(frames>=stopAt)return;requestAnimationFrame(frame);
  const dt=Math.min(.05,Math.max(0,(now-last)/1000));last=now;
- if(state==='play'){update(dt);updZombies(dt);updNpcs(dt);updWGolems(dt);updCreepers(dt);updOrbs(dt);updBolts(dt);updDrops(dt);updAttract(dt);updParts(dt);updDongfeng(dt)}else if(state==='dead'){updParts(dt)}
+ if(gen){try{stepGen()}catch(err){gen=null;const ov=$('genOv');if(ov)ov.classList.add('hidden');toast('世界生成失败：'+(err&&err.message||err));state='menu'}}
+ else{try{stepTransform()}catch(err){xform=null;toast('变换失败：'+(err&&err.message||err))}updateLapUI();
+ if(state==='play'){update(dt);updZombies(dt);updNpcs(dt);updWGolems(dt);updCreepers(dt);updOrbs(dt);updBolts(dt);updDrops(dt);updAttract(dt);updParts(dt);updDongfeng(dt)}else if(state==='dead'){updParts(dt)}}
  clouds.position.x+=dt*.8;if(clouds.position.x>80)clouds.position.x=-60;
  updCamera(dt);sunMesh.position.copy(camera.position).add(new THREE.Vector3(-60,90,-40));sunMesh.lookAt(camera.position);
- updChunks();
+ updChunks(meshBoost>0?(touchMode?3:8):undefined);if(meshBoost>0)meshBoost--;
  fpsT+=dt;fpsN++;if(fpsT>=.5){fps=Math.round(fpsN/fpsT);fpsT=0;fpsN=0}
  if(frames%10===0){const gc=golemCount();$('stats').innerHTML=`<b style="color:#ffd34d">⚔ Attack power: ${fmt(playerDmg())}</b> <span style="opacity:.75">(base ${fmt(baseDmg)} · swords ${swordsPicked})</span><br>Zombies defeated: ${kills} &middot; by golems: ${golemKills}<br>Iron golems: ${gc} &middot; White golems: ${wGolems.length} &middot; Villagers: ${npcs.length-gc}<br>Creepers: ${creepers.length} &middot; Orbs: ${orbs.length}<br>Blocks mined: ${mined} &middot; Diamonds: ${diamonds}<br><span style="opacity:.6">${fps} fps &middot; XYZ ${P.pos.x.toFixed(0)} ${P.pos.y.toFixed(0)} ${P.pos.z.toFixed(0)}</span>`}
  drawHearts();
@@ -993,7 +1221,7 @@ function frame(now){frames++;if(frames>=stopAt)return;requestAnimationFrame(fram
 if(touchMode)enableTouch();newWorld();$('hud').style.display='none';requestAnimationFrame(frame);
 // tiny debug hook (used for automated testing)
 window.__mc={startPlay,state:()=>state,P,zombies,npcs,wGolems,creepers,orbs,bolts,drops,villages:()=>villages,stats,get,setBlock,doBreak,doPlace,fireMissile,fireDongfeng,detonateDongfeng,select,spawnZombie,makeNpc,makeZombie,makeWGolem,makeCreeper,makeOrb,shootBolt,explodeCreeper,hitWGolem,hitCreeper,hitOrb,openCraft,craft,RECIPES,count,addItem,inv:()=>inv,triggerAttract,inAttractCube,flyBlocks,ATTRACT_SIDE,ATTRACT_HALF,attractCd:()=>attractCd,attractFlash:()=>attractFlash,setAttractCd:v=>{attractCd=v},clearFlyBlocks,
- atk:()=>atkMult,baseDmg:()=>baseDmg,playerDmg,golemCount,golemKills:()=>golemKills,golemDeaths:()=>golemDeaths,kills:()=>kills,colTop,SX,SZ,VIEW:()=>VIEW,touchMode:()=>touchMode,enableTouch,joy:()=>joy,applyQuality,unlockAudio,stopAfter:n=>{stopAt=frames+n},clearZombies:()=>{while(zombies.length)removeZombie(zombies[0]);zTimer=999},clearCreepers:()=>{while(creepers.length)removeCreeper(creepers[0]);cTimer=999},clearOrbs:()=>{while(orbs.length)removeOrb(orbs[0]);while(bolts.length)removeBolt(bolts[0]);oTimer=999},setGameTime:t=>{gameTime=t},fps:()=>fps,setNoLock:()=>{noLock=true},chunksBuilt:()=>chunks.filter(c=>c.built).length,controlMode:()=>controlMode,setControlMode:on=>{controlMode=!!on;syncModeUI()},creative:()=>creative,setCreative,flying:()=>flying,setFlying,openSub2,closeSub2,sub2Open:()=>sub2Open,worldWrecked:()=>worldWrecked,blockCount:()=>{let n=0;for(let i=0;i<world.length;i++)if(world[i])n++;return n},ids:{STICK,PLANKS,LOG,COAL_I,TORCH,IRON,IRON_INGOT,IRON_SWORD,WOOD_PICK,STONE_PICK,COBBLE,TABLE,FURNACE,MISSILE,DF_MISSILE,SAND,DIAMOND,DIAMOND_I},diamonds:()=>diamonds};
+ atk:()=>atkMult,baseDmg:()=>baseDmg,playerDmg,golemCount,golemKills:()=>golemKills,golemDeaths:()=>golemDeaths,kills:()=>kills,colTop,SX,SZ,VIEW:()=>VIEW,touchMode:()=>touchMode,enableTouch,joy:()=>joy,applyQuality,unlockAudio,stopAfter:n=>{stopAt=frames+n},clearZombies:()=>{while(zombies.length)removeZombie(zombies[0]);zTimer=999},clearCreepers:()=>{while(creepers.length)removeCreeper(creepers[0]);cTimer=999},clearOrbs:()=>{while(orbs.length)removeOrb(orbs[0]);while(bolts.length)removeBolt(bolts[0]);oTimer=999},setGameTime:t=>{gameTime=t},fps:()=>fps,setNoLock:()=>{noLock=true},chunksBuilt:()=>chunks.filter(c=>c.built).length,controlMode:()=>controlMode,setControlMode:on=>{controlMode=!!on;syncModeUI()},creative:()=>creative,setCreative,flying:()=>flying,setFlying,openSub2,closeSub2,sub2Open:()=>sub2Open,worldWrecked:()=>worldWrecked,blockCount:()=>{let n=0;for(let i=0;i<world.length;i++)if(world[i])n++;return n},ids:{STICK,PLANKS,LOG,COAL_I,TORCH,IRON,IRON_INGOT,IRON_SWORD,WOOD_PICK,STONE_PICK,COBBLE,TABLE,FURNACE,MISSILE,DF_MISSILE,SAND,DIAMOND,DIAMOND_I,DBLK,GLASS,AIR,BEDROCK},diamonds:()=>diamonds,SY,DBLK,GLASS,AIR,BEDROCK,DIAMOND,nearLaptop,laptopPos:()=>laptop&&{x:laptop.x,y:laptop.y,z:laptop.z},interact,chooseLaptop,openLaptop,closeLaptop,xformActive:()=>!!xform,finishTransform,genReady:()=>!gen,stepGen,standColumn,buildChunk,chunkIndexCount,updateLapUI,overlapsPlayer,worldBytes:()=>world.byteLength,auditBlocks,LAP_REACH,BD};
 })();
 
 </script>
