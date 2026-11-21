@@ -20,15 +20,20 @@ Standalone offline browser game. Play it on GitHub Pages, or open `index.html` l
 
 The land is **512 blocks wide and 1024 blocks long** (40 blocks tall). Chunks stream in around you, so distant land stays in memory without being drawn all at once.
 
-## Laptop
+## Computers
 
-A laptop sits on the path just north of spawn, toward the village. Walk up to it and press **E**. On a phone or tablet, tap **使用电脑** (the Craft button also switches to that while you are next to it).
+Two computers sit side by side just north of spawn. The left one is cyan and labeled **材质**. The right one is orange and labeled **建造**. Walk up to one and press **E**. If you can reach both, the nearer one is used (an exact tie uses the material computer). On a phone or tablet, tap the use button. Its label names which computer you are next to. The Craft button does the same while you are next to one. Away from both, **E** still opens crafting.
 
-- **是** turns every non-air block in the whole world into a **diamond block** (a solid block, not diamond ore).
+**材质电脑**
+
+- **是** turns every non-air block into a **diamond block** (a solid block, not diamond ore).
 - **否** turns every non-air block into **glass**.
-- Air stays air. Bedrock, water, and other blocks change too. The space you are standing in is cleared so you are not buried. You can choose again.
+- Air stays air. The space you are standing in is cleared so you are not buried.
 
-Away from the laptop, **E** still opens crafting.
+**建造电脑**
+
+- **是** scatters houses, towers, halls, and chapels across the map, a few dozen at a time, clear of spawn and both computers. Work is spread across frames. A later **是** adds another round in the gaps, up to 80 buildings, and does not stack them on top of each other.
+- **否** does not change any block.
 
 ## Gravity pull
 

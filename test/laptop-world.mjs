@@ -1,5 +1,6 @@
 import puppeteer from '/tmp/ppt/node_modules/puppeteer-core/lib/puppeteer/puppeteer-core.js'
 import {pathToFileURL} from 'node:url'
+import {readFileSync} from 'node:fs'
 
 const chrome = '/usr/local/bin/google-chrome'
 const url = pathToFileURL('/workspace/index.html').href
@@ -48,6 +49,20 @@ const result = await page.evaluate(async () => {
   assert(mc.creative()&&mc.flying(), 'creative fly')
   mc.setCreative(false)
   assert(!mc.creative()&&!mc.flying(), 'back to survival')
+  assert(typeof mc.makeOrb!=='function' && typeof mc.shootBolt!=='function' && mc.orbs===undefined && mc.bolts===undefined, 'orb and bolt API removed')
+  assert(mc.wGolems.length>0, 'white iron golems still spawn '+mc.wGolems.length)
+  const help = document.body.innerHTML
+  assert(!help.includes('white orbs') && !help.includes('Orbs:'), 'help and HUD do not mention orbs')
+  assert(help.includes('white iron golems'), 'white iron golem help remains')
+  const bg = mc.bgInfo()
+  out.bg = bg
+  assert(bg.sky===0x9ccfff && bg.water===0x1d3f9a && bg.cave===0x0e0f14, 'sky and fog colors unchanged '+JSON.stringify(bg))
+  assert(bg.hemiSky===0xffffff && bg.hemiGround===0x777788 && Math.abs(bg.hemiInt-0.85)<1e-6, 'hemisphere light unchanged')
+  assert(bg.dirColor===0xffffff && Math.abs(bg.dirInt-0.55)<1e-6, 'directional light unchanged')
+  mc.setGameTime(500)
+  for (let i=0;i<40;i++) await new Promise(r => requestAnimationFrame(r))
+  assert(mc.wGolems.length>0, 'white golems remain after time passes')
+  assert(!document.body.innerHTML.includes('Orbs:'), 'HUD stays free of orb count')
 
   const L = mc.laptopPos()
   assert(L && Number.isFinite(L.x), 'laptop placed')
@@ -99,6 +114,93 @@ const result = await page.evaluate(async () => {
   assert(mc.state()==='laptop', 'touch use opens dialog')
   document.getElementById('lapCancel').click()
   assert(mc.state()==='play', 'cancel button closes')
+
+  const B = mc.buildPos()
+  assert(B && B.kind==='build' && B.visible!==false, 'build computer placed')
+  const sep = Math.hypot(B.x-L.x, B.z-L.z)
+  assert(sep>mc.LAP_REACH && sep<6 && B.x>L.x && B.z<spawn.z && L.z<spawn.z, 'computers side by side north of spawn, sep '+sep.toFixed(2))
+  mc.P.pos.set((L.x+B.x)/2, L.y, (L.z+B.z)/2)
+  mc.updateLapUI()
+  assert(mc.nearestKind()==='material', 'exact tie prefers material computer, got '+mc.nearestKind())
+  mc.P.pos.set(B.x, B.y, B.z)
+  mc.updateLapUI()
+  assert(mc.nearestKind()==='build' && !mc.nearLaptop(), 'standing on build computer selects it')
+  assert(document.getElementById('lapHint').textContent.includes('建造电脑'), 'hint names the build computer')
+  window.dispatchEvent(new KeyboardEvent('keydown', {code:'KeyE', bubbles:true}))
+  assert(mc.state()==='buildpc', 'E opens construction dialog')
+  const bdlg = document.getElementById('buildDlg')
+  assert(bdlg && !bdlg.classList.contains('hidden') && bdlg.textContent.includes('建造电脑') && bdlg.textContent.includes('不是材质电脑'), 'dialog identified as construction')
+  const sum0 = mc.worldChecksum()
+  assert(mc.chooseBuild(false)==='no', 'no returns no')
+  assert(mc.state()==='play', 'no closes dialog')
+  assert(mc.worldChecksum()===sum0, 'no leaves the whole world unchanged')
+  mc.P.pos.set(B.x, B.y, B.z)
+  mc.enableTouch()
+  mc.updateLapUI()
+  const useB = document.getElementById('btnUse')
+  assert(useB && useB.textContent.includes('建造') && getComputedStyle(useB).display!=='none', 'touch button names build computer')
+  useB.click()
+  assert(mc.state()==='buildpc', 'touch opens construction dialog')
+  document.getElementById('buildCancel').click()
+  assert(mc.state()==='play' && mc.worldChecksum()===sum0, 'cancel leaves world unchanged')
+
+  mc.P.pos.set(spawn.x, spawn.y, spawn.z)
+  const startedB = mc.chooseBuild(true)
+  assert(startedB===true && mc.buildActive(), 'yes starts construction')
+  assert(mc.chooseLaptop(true)===false && mc.xformActive()===false, 'material laptop refused while building')
+  assert(mc.chooseBuild(true)===false, 'second construction refused while running')
+  assert(mc.finishBuild()===true && !mc.buildActive(), 'construction finishes')
+  const rep1 = mc.buildReport()
+  out.build1 = rep1
+  assert(rep1.count>=30, 'many buildings '+rep1.count)
+  for (const t of ['house','tower','hall','chapel']) assert(rep1.by[t]>=4, t+' count '+rep1.by[t])
+  const sites = rep1.sites
+  assert(sites.some(s=>s.x<mc.SX*0.25) && sites.some(s=>s.x>mc.SX*0.75) && sites.some(s=>s.z<mc.SZ*0.25) && sites.some(s=>s.z>mc.SZ*0.75), 'buildings span distant regions')
+  let crowded=0
+  for (let i=0;i<sites.length;i++) for (let j=i+1;j<sites.length;j++){
+    if (Math.abs(sites[i].x-sites[j].x)<=8 && Math.abs(sites[i].z-sites[j].z)<=8) crowded++
+  }
+  assert(crowded===0, 'building centers are spaced, crowded '+crowded)
+  let spawnHit=0, changed=0
+  for (const s of sites){
+    if (Math.hypot(s.x-spawn.x, s.z-spawn.z)<16) spawnHit++
+    const floor = mc.get(s.x, s.y, s.z)
+    if (floor!==mc.AIR && floor!==mc.BEDROCK) changed++
+  }
+  assert(spawnHit===0, 'spawn neighborhood kept clear')
+  assert(changed===sites.length, 'each site has a solid floor block')
+  assert(mc.worldChecksum()!==sum0, 'yes changed the world')
+
+  const n1 = rep1.count
+  assert(mc.chooseBuild(true)===true, 'repeat construction starts')
+  assert(mc.finishBuild()===true, 'repeat construction finishes')
+  const rep2 = mc.buildReport()
+  out.build2 = {count:rep2.count, by:rep2.by}
+  assert(rep2.count>n1 && rep2.count<=rep2.cap, 'repeat adds buildings without passing the cap '+rep2.count)
+  let overlap=0
+  const s2 = rep2.sites
+  for (let i=0;i<s2.length;i++) for (let j=i+1;j<s2.length;j++){
+    if (Math.abs(s2[i].x-s2[j].x)<=8 && Math.abs(s2[i].z-s2[j].z)<=8) overlap++
+  }
+  assert(overlap===0, 'repeat does not stack sites, overlap '+overlap)
+  const beforeCap = mc.worldChecksum()
+  let guard=0
+  while (mc.buildReport().count<mc.buildReport().cap && guard++<4){
+    const r = mc.chooseBuild(true)
+    if (r!==true) break
+    mc.finishBuild()
+  }
+  const atCap = mc.buildReport().count>=mc.buildReport().cap
+  const sumCap = mc.worldChecksum()
+  const capped = mc.chooseBuild(true)
+  if (atCap){
+    assert(capped==='cap', 'full computer refuses another wave')
+    assert(mc.worldChecksum()===sumCap, 'refused wave does not change blocks')
+  } else {
+    assert(capped==='cap' || capped===true || capped==='no', 'extra wave result '+capped)
+    out.capNote = 'cap not reached '+mc.buildReport().count
+  }
+  out.buildFinal = mc.buildReport().count
 
   const worldLen = mc.worldBytes()
   assert(worldLen===512*1024*40, 'len')
@@ -185,6 +287,20 @@ const result = await page.evaluate(async () => {
   // BD transparency still correct
   assert(mc.BD[mc.GLASS].tr===true && mc.BD[mc.DBLK].tr===false, 'materials unchanged')
   assert(mc.laptopPos(), 'laptop mesh remains')
+  mc.wipeWorld()
+  assert(mc.worldWrecked() && mc.buildPos() && mc.buildPos().visible===false, 'wipe hides the build computer')
+  assert(mc.nearestKind()===null, 'neither computer is usable after a world wipe')
+  mc.newWorld()
+  const genT = performance.now()
+  while (!mc.genReady()) {
+    if (performance.now()-genT>45000) break
+    await new Promise(r => requestAnimationFrame(r))
+  }
+  assert(mc.genReady(), 'new world finished')
+  const L2 = mc.laptopPos(), B2 = mc.buildPos()
+  assert(L2 && B2 && B2.visible!==false && Math.hypot(L2.x-B2.x, L2.z-B2.z)>mc.LAP_REACH, 'new world respawns both computers')
+  assert(mc.buildReport().count===0, 'construction list resets with the world')
+  assert(mc.SX===512 && mc.SY===40 && mc.SZ===1024, 'map size unchanged')
   out.spawn = spawn
   out.laptop = L
   out.villages = mc.villages().length
@@ -193,23 +309,37 @@ const result = await page.evaluate(async () => {
   return out
 })
 
-// screenshots of the live page after the scripted state. Re-open dialog for a clean shot by reloading is heavy.
-// Capture current view: diamond world. Then reopen dialog by evaluating.
 await page.evaluate(async () => {
   const mc = window.__mc
-  const L = mc.laptopPos()
-  mc.P.pos.set(L.x, L.y+0.05, L.z+2.4)
+  mc.setNoLock(); mc.startPlay()
+  const bury = e => { if (e && e.pos) e.pos.y = -40 }
+  mc.npcs.forEach(bury); mc.zombies.forEach(bury); mc.wGolems.forEach(bury); mc.creepers.forEach(bury)
+  document.body.classList.remove('touch')
+  const L = mc.laptopPos(), B = mc.buildPos()
+  mc.P.pos.set((L.x+B.x)/2, L.y+0.05, L.z+3.6)
   mc.P.vel.set(0,0,0)
-  mc.P.yaw = Math.atan2(-(L.x-mc.P.pos.x), -(L.z-mc.P.pos.z))
-  mc.P.pitch = -0.35
-  mc.startPlay()
-  mc.setNoLock()
+  mc.P.yaw = Math.atan2(-((L.x+B.x)/2 - mc.P.pos.x), -(L.z - mc.P.pos.z))
+  mc.P.pitch = -0.2
+  mc.updateLapUI()
   for (let i=0;i<8;i++) await new Promise(r => requestAnimationFrame(r))
 })
-await page.screenshot({path: shots+'/laptop-diamond-world.png'})
-await page.evaluate(() => { window.__mc.P.pos.set(window.__mc.laptopPos().x, window.__mc.laptopPos().y, window.__mc.laptopPos().z); window.__mc.updateLapUI(); window.__mc.openLaptop() })
-await page.screenshot({path: shots+'/laptop-dialog.png'})
+await page.screenshot({path: shots+'/two-computers.png'})
+await page.evaluate(() => {
+  const mc = window.__mc
+  const B = mc.buildPos()
+  mc.P.pos.set(B.x, B.y, B.z)
+  mc.updateLapUI()
+  mc.openBuild()
+})
+await page.screenshot({path: shots+'/build-dialog.png'})
 
-console.log(JSON.stringify({result, logs: logs.slice(0,20), old: OLD}, null, 2))
+const src = readFileSync('/workspace/index.html', 'utf8')
+const srcFails = []
+for (const bad of ['makeOrb', 'spawnOrb', 'updOrbs', 'updBolts', 'white orbs', 'shootBolt']) {
+  if (src.includes(bad)) srcFails.push('source still has '+bad)
+}
+if (!src.includes('HemisphereLight(0xffffff,0x777788,.85)') || !src.includes('0x9ccfff') || !src.includes('white iron golems')) srcFails.push('background or white golem text missing')
+console.log(JSON.stringify({result, logs: logs.slice(0,20), old: OLD, srcFails}, null, 2))
+if (srcFails.length) process.exit(1)
 await browser.close()
 if (result.fails.length) process.exit(1)
