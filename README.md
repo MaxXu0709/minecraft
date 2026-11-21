@@ -35,6 +35,12 @@ Two computers sit side by side just north of spawn. The left one is cyan and lab
 - **是** scatters houses, towers, halls, and chapels across the map, a few dozen at a time, clear of spawn and both computers. Work is spread across frames. A later **是** adds another round in the gaps, up to 80 buildings, and does not stack them on top of each other.
 - **否** does not change any block.
 
+## Verity
+
+Verity is the yellow ball that appears beside you and says “Hi, I'm Verity”. She is not one of the removed hostile white balls. Press **T** near her to chat, or tap **交谈**. Look at her and press **F** to carry her, then **F** again to put her down. On a phone, tap **抱起** and **放下**. Hitting her makes her say “Ouch, why you hit me?” If she is defeated, she comes back beside you.
+
+Her replies are prepared sentences stored in the page, in English and Chinese, about the computers, gravity, missiles, crafting, and carrying her. She is not a live AI. A real chat model would need a separate account, an API key kept out of the page, and a network call.
+
 ## Gravity pull
 
 Mining a block, or picking up an item, pulls nearby loose blocks and creatures toward you. The pull covers one cube centered on you that is **10 blocks wide, 10 tall, and 10 deep** (about 5 blocks out in every direction). A glowing outline shows that cube. Bedrock is never pulled, and the pull does not hurt you.

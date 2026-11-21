@@ -64,6 +64,75 @@ const result = await page.evaluate(async () => {
   assert(mc.wGolems.length>0, 'white golems remain after time passes')
   assert(!document.body.innerHTML.includes('Orbs:'), 'HUD stays free of orb count')
 
+  const home = {x:mc.P.pos.x, y:mc.P.pos.y, z:mc.P.pos.z}
+  mc.syncVerityHud()
+  const v0 = mc.verity()
+  assert(v0 && Math.hypot(v0.x-home.x, v0.z-home.z)<3, 'Verity spawns beside the player')
+  assert(v0.line==="Hi, I'm Verity" && document.getElementById('verityBubble').textContent==="Hi, I'm Verity", 'exact greeting')
+  assert(document.getElementById('verityName').textContent==='Verity', 'visible name')
+  assert(v0.hp===5 && !v0.carried, 'starts healthy and on the ground')
+  mc.P.pos.set(v0.x, v0.y-1.0, v0.z+1.2)
+  mc.updVerity(0.05)
+  assert(mc.nearVerity() && !mc.nearestKind(), 'beside Verity without reaching a computer')
+  window.dispatchEvent(new KeyboardEvent('keydown', {code:'KeyE', bubbles:true}))
+  assert(mc.state()==='craft', 'E near Verity still opens crafting, not chat')
+  mc.startPlay()
+  assert(mc.openVerityChat()===true && mc.chatOpen(), 'T-equivalent opens chat when nearby')
+  const input = document.getElementById('verityInput')
+  assert(document.activeElement===input, 'chat focuses the text field')
+  input.value = 'How does gravity work?'
+  const reply = mc.sendVerityChat()
+  assert(/10/.test(reply), 'gravity question gets a local reply: '+reply)
+  const panel = document.getElementById('verityChat').textContent
+  assert(/not a live AI/i.test(panel) && /Verity:/.test(document.getElementById('verityLog').textContent), 'chat is labeled offline and shows the reply')
+  const replyZh = mc.verityReply('重力是什么')
+  assert(/10/.test(replyZh), 'Chinese gravity reply')
+  const a = mc.verityReply('who are you'), b = mc.verityReply('who are you')
+  assert(a!==b, 'repeated questions vary')
+  window.dispatchEvent(new KeyboardEvent('keydown', {code:'KeyW', bubbles:true}))
+  assert(!mc.keys().KeyW, 'movement keys are ignored while chat is focused')
+  mc.closeVerityChat()
+  window.dispatchEvent(new KeyboardEvent('keydown', {code:'KeyW', bubbles:true}))
+  assert(mc.keys().KeyW, 'movement keys work after chat closes')
+  mc.keys().KeyW = false
+  mc.P.pos.set(v0.x, v0.y-1.0, v0.z+1.8)
+  mc.P.yaw = Math.atan2(-(v0.x-mc.P.pos.x), -(v0.z-mc.P.pos.z))
+  mc.P.pitch = -0.25
+  mc.updVerity(0.05)
+  assert(mc.rayHitsVerity(), 'raycast reaches Verity')
+  const hp1 = mc.hitVerity(1)
+  assert(hp1===4 && mc.verity().line==="Ouch, why you hit me?" && document.getElementById('verityBubble').textContent==="Ouch, why you hit me?", 'exact hit line and HP')
+  assert(mc.toggleCarry(false)==='carry' && mc.verity().carried, 'raycast pickup')
+  mc.P.pos.x += 12
+  mc.updVerity(0.2)
+  assert(Math.hypot(mc.verity().x-mc.P.pos.x, mc.verity().z-mc.P.pos.z)<2, 'carried Verity stays with the player')
+  const carriedY = mc.verity().y
+  assert(mc.toggleCarry(false)==='drop' && !mc.verity().carried, 'put Verity down')
+  const dropped = {x:mc.verity().x, z:mc.verity().z}
+  mc.P.pos.z += 10
+  mc.updVerity(0.3)
+  assert(Math.abs(mc.verity().x-dropped.x)<0.2 && Math.abs(mc.verity().z-dropped.z)<0.2, 'dropped Verity stays put')
+  mc.P.pos.set(40.5, 30, 40.5)
+  mc.hitVerity(20)
+  const v2 = mc.verity()
+  assert(v2.hp===5 && v2.line==="Hi, I'm Verity" && Math.hypot(v2.x-mc.P.pos.x, v2.z-mc.P.pos.z)<3, 'death respawns Verity beside the player')
+  mc.enableTouch()
+  mc.P.pos.set(v2.x, v2.y-1, v2.z)
+  mc.updVerity(0.05)
+  const talk = document.getElementById('btnTalk')
+  const carryBtn = document.getElementById('btnCarry')
+  assert(talk && getComputedStyle(talk).display!=='none', 'touch talk button visible')
+  talk.click()
+  assert(mc.chatOpen(), 'touch talk opens chat')
+  mc.closeVerityChat()
+  carryBtn.click()
+  assert(mc.verity().carried, 'touch carry picks Verity up')
+  carryBtn.click()
+  assert(!mc.verity().carried, 'touch drop puts Verity down')
+  document.body.classList.remove('touch')
+  mc.P.pos.set(home.x, home.y, home.z)
+  mc.updVerity(0.05)
+
   const L = mc.laptopPos()
   assert(L && Number.isFinite(L.x), 'laptop placed')
   const spawn = {x:mc.P.pos.x, y:mc.P.pos.y, z:mc.P.pos.z}
@@ -289,6 +358,7 @@ const result = await page.evaluate(async () => {
   assert(mc.laptopPos(), 'laptop mesh remains')
   mc.wipeWorld()
   assert(mc.worldWrecked() && mc.buildPos() && mc.buildPos().visible===false, 'wipe hides the build computer')
+  assert(mc.verity() && mc.verity().hp===5 && Math.hypot(mc.verity().x-mc.P.pos.x, mc.verity().z-mc.P.pos.z)<3, 'Verity returns beside the player after the world wipe')
   assert(mc.nearestKind()===null, 'neither computer is usable after a world wipe')
   mc.newWorld()
   const genT = performance.now()
@@ -300,6 +370,7 @@ const result = await page.evaluate(async () => {
   const L2 = mc.laptopPos(), B2 = mc.buildPos()
   assert(L2 && B2 && B2.visible!==false && Math.hypot(L2.x-B2.x, L2.z-B2.z)>mc.LAP_REACH, 'new world respawns both computers')
   assert(mc.buildReport().count===0, 'construction list resets with the world')
+  assert(mc.verity() && mc.verity().line==="Hi, I'm Verity" && Math.hypot(mc.verity().x-mc.P.pos.x, mc.verity().z-mc.P.pos.z)<3, 'new world greets with Verity beside the player')
   assert(mc.SX===512 && mc.SY===40 && mc.SZ===1024, 'map size unchanged')
   out.spawn = spawn
   out.laptop = L
@@ -332,6 +403,26 @@ await page.evaluate(() => {
   mc.openBuild()
 })
 await page.screenshot({path: shots+'/build-dialog.png'})
+await page.evaluate(async () => {
+  const mc = window.__mc
+  mc.closeVerityChat()
+  mc.startPlay()
+  mc.setNoLock()
+  const v = mc.verity()
+  mc.P.pos.set(v.x, v.y-1.0, v.z+2.4)
+  mc.P.yaw = Math.atan2(-(v.x-mc.P.pos.x), -(v.z-mc.P.pos.z))
+  mc.P.pitch = 0.05
+  mc.syncVerityHud()
+  for (let i=0;i<6;i++) await new Promise(r => requestAnimationFrame(r))
+})
+await page.screenshot({path: shots+'/verity-greeting.png'})
+await page.evaluate(() => {
+  const mc = window.__mc
+  const v = mc.verity()
+  mc.P.pos.set(v.x, v.y-1.0, v.z+0.4)
+  mc.openVerityChat()
+})
+await page.screenshot({path: shots+'/verity-chat.png'})
 
 const src = readFileSync('/workspace/index.html', 'utf8')
 const srcFails = []

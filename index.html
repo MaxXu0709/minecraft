@@ -110,6 +110,19 @@ body.touch #touchUI{display:block}
 }
 #lapHint{display:none;position:absolute;left:50%;top:46%;transform:translate(-50%,-70%);z-index:9;pointer-events:none;font-size:16px;font-weight:bold;color:#bff6ff;text-shadow:2px 2px 0 #000;background:rgba(0,0,0,.55);padding:8px 12px;max-width:min(92vw,420px);text-align:center}
 #btnUse{display:none;position:absolute;left:50%;bottom:calc(148px + env(safe-area-inset-bottom));transform:translateX(-50%);width:148px;height:48px;z-index:7}
+#btnTalk,#btnCarry{display:none;position:absolute;z-index:7;width:120px;height:46px}
+#btnTalk{left:max(12px,env(safe-area-inset-left));bottom:calc(210px + env(safe-area-inset-bottom))}
+#btnCarry{left:max(140px,calc(env(safe-area-inset-left) + 128px));bottom:calc(210px + env(safe-area-inset-bottom))}
+body.touch.near-verity #btnTalk,body.touch.near-verity #btnCarry,body.touch.carrying-verity #btnCarry{display:block}
+#verityHud{position:fixed;z-index:12;pointer-events:none;transform:translate(-50%,-120%);text-align:center}
+#verityName{font-weight:bold;color:#ffe56a;text-shadow:2px 2px 0 #000;font-size:16px}
+#verityBubble{margin-top:4px;background:rgba(30,20,0,.88);color:#fff;border:3px solid #ffd23a;padding:6px 10px;font-weight:bold;max-width:240px}
+#verityChat{position:fixed;left:max(10px,env(safe-area-inset-left));bottom:86px;z-index:28;width:min(92vw,380px);background:rgba(24,16,6,.94);color:#fff;border:3px solid #e0a020;padding:10px;font-size:14px}
+#verityChat.hidden{display:none}
+#verityChat .vh{color:#ffe56a;font-weight:bold;margin-bottom:6px}
+#verityChat small{display:block;font-weight:normal;color:#ffd9a0}
+#verityLog{max-height:28vh;overflow:auto;background:rgba(0,0,0,.35);padding:6px;margin-bottom:8px}
+#verityForm{display:flex;gap:6px}#verityInput{flex:1;font:14px monospace;padding:6px}
 body.touch.near-lap #btnUse{display:block}
 #genOv{z-index:40;background:rgba(0,0,0,.72)}
 #laptopDlg,#buildDlg{z-index:30}
@@ -117,10 +130,11 @@ body.touch.near-lap #btnUse{display:block}
 #laptopDlg p,#buildDlg p{font-size:15px;line-height:1.45;margin:8px 0}
 </style></head><body>
 <div id="hud">
- <div id="hint">Click to capture mouse &middot; Mouse look<br>WASD / Arrows move &middot; Space jump &middot; Shift sprint<br>Left click mine / attack &middot; Right click place<br>E crafting &middot; 1-9 / wheel select<br>R new world &middot; Esc pause</div>
+ <div id="hint">Click to capture mouse &middot; Mouse look<br>WASD / Arrows move &middot; Space jump &middot; Shift sprint<br>Left click mine / attack &middot; Right click place<br>E crafting &middot; 1-9 / wheel select<br>T talk to Verity &middot; F pick up / put down<br>R new world &middot; Esc pause</div>
  <div id="stats"></div>
  <div id="cross"></div><div id="mineBar"><div></div></div><div id="toast"></div>
  <div id="lapHint"></div>
+ <div id="verityHud" style="display:none"><div id="verityName">Verity</div><div id="verityBubble"></div></div>
  <div id="itemName"></div>
  <button type="button" class="ctrl-btn" id="ctrlBtnHud">开始操纵：关</button>
  <div id="hearts"></div>
@@ -135,6 +149,8 @@ body.touch.near-lap #btnUse{display:block}
    <button type="button" class="tbtn" id="btnJump">Jump</button>
    <button type="button" class="tbtn" id="btnDown">Down</button>
    <button type="button" class="tbtn" id="btnUse">使用电脑</button>
+   <button type="button" class="tbtn" id="btnTalk">交谈</button>
+   <button type="button" class="tbtn" id="btnCarry">抱起</button>
   </div>
  </div>
 </div>
@@ -147,6 +163,7 @@ body.touch.near-lap #btnUse{display:block}
   &bull; <b>Desktop:</b> mouse look, <b>W A S D</b> / arrows walk, <b>Space</b> jump, <b>Shift</b> sprint, left click mine/attack, right click place, <b>E</b> craft, <b>1-9</b> / wheel select, <b>R</b> new world, <b>Esc</b> pause<br>
   &bull; <b>Phone &amp; tablet:</b> left joystick to move, drag the right half of the screen to look, on-screen <b>Jump</b>, hold <b>Mine / Attack</b>, <b>Place</b>, <b>Craft</b>, tap the hotbar, <b>New World</b>. Near the laptop, <b>使用电脑</b> / Craft opens it<br>
   &bull; <b>更大更长的陆地：</b>地图 <b>512×1024</b>（高 40，原来是 256×256）。出生点北面并排两台电脑：左边<b>材质</b>（青色，是＝钻石块，否＝玻璃块），右边<b>建造</b>（橙色，是＝在各地盖房屋、塔、大厅和小教堂，否＝不改地形）。靠近后按 <b>E</b>，离得近的那一台生效。手机点对应的使用按钮。走开再按 E 仍是合成<br>
+  &bull; <b>Verity</b> is the yellow ball beside you, not a white orb. She says <b>Hi, I'm Verity</b>. Press <b>T</b> to chat (saved replies, not a live AI). Look at her and press <b>F</b> to carry her, then <b>F</b> to put her down. On a phone, tap <b>交谈</b> and <b>抱起</b>. Hitting her says <b>Ouch, why you hit me?</b><br>
   &bull; Explore a huge world: <b>caves</b>, <b>mineshafts</b> with torches, ores, and <b>villages</b> with friendly wandering villagers (they never attack)<br>
   &bull; <b>Zombies</b> hunt you and iron golems — a zombie kills a golem in one hit<br>
   &bull; <b>Iron golems</b> smash zombies in <b>one hit</b>, and <b>never attack you</b> unless <b>开始操纵</b> is on (then they chase and punch for 2 hearts). One hit from you destroys a golem… and <b>two new golems</b> rise in its place!<br>
@@ -168,6 +185,7 @@ body.touch.near-lap #btnUse{display:block}
 <div id="craft" class="ov hidden"><h2>Crafting</h2><div class="cwrap"><div class="cpanel"><h3>Inventory</h3><div id="invGrid"></div><div class="tip">Click or tap a slot, then another, to swap items. Bottom row = hotbar.</div><div id="atkInfo"></div></div><div class="cpanel"><h3>Recipes <small style="font-weight:normal">(green = craftable, tap to craft)</small></h3><div id="recipes"></div></div></div><button class="btn" id="closeCraft">Close (E)</button></div>
 <div id="dead" class="ov hidden"><h2>You died!</h2><div id="deadMsg" style="font-size:18px"></div><button class="btn" id="respawnBtn">Respawn</button><button class="btn" id="newBtn2">New World (R)</button></div>
 <div id="laptopDlg" class="ov hidden"><div class="sub2box"><h2>材质电脑</h2><p>这是<b>材质电脑</b>，不是建造电脑。要把<b>整个世界</b>里所有非空气方块变成什么？空气保持空气。基岩、水和其它方块也会变。你站着的格子会留出空气。可以反复选择。</p><button type="button" class="btn" id="lapYes">是 — 全部变成钻石块</button><button type="button" class="btn" id="lapNo">否 — 全部变成玻璃块</button><button type="button" class="btn" id="lapCancel">取消</button></div></div>
+<div id="verityChat" class="hidden"><div class="vh">Verity<small>Offline helper — prepared replies, not a live AI. 离线助手，不是真正的人工智能。</small></div><div id="verityLog"></div><form id="verityForm"><input id="verityInput" maxlength="200" autocomplete="off" placeholder="Ask in English or 中文"><button type="submit" id="veritySend">Send</button></form><button type="button" class="btn" id="verityClose">Close</button></div>
 <div id="buildDlg" class="ov hidden"><div class="sub2box"><h2>建造电脑</h2><p>这是<b>建造电脑</b>，不是材质电脑。要在大地图上分散建造许多房屋、塔、大厅和小教堂吗？<b>否</b>不会改动任何方块。出生点、两台电脑和你身边会避开。<br>可以再建造一轮，满了就停止，不会叠在一起。</p><button type="button" class="btn" id="buildYes">是 — 在各地建造房屋和塔</button><button type="button" class="btn" id="buildNo">否 — 不改变地形</button><button type="button" class="btn" id="buildCancel">取消</button></div></div>
 <div id="genOv" class="ov"><h2>正在生成世界</h2><p id="genMsg">正在铺设更长的陆地…</p></div>
 <script>
@@ -308,7 +326,7 @@ function vnoise(x,z){const xi=Math.floor(x),zi=Math.floor(z),xf=x-xi,zf=z-zi,u=x
 function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 function beginGen(){
  try{
-  xform=null;buildJob=null;buildSites=[];worldWrecked=false;
+  xform=null;buildJob=null;buildSites=[];worldWrecked=false;clearVerity();
   if(typeof endDongfeng==='function')endDongfeng();
   chunks.forEach(discardChunk);
   if(typeof clearAllMobs==='function')clearAllMobs();
@@ -817,6 +835,7 @@ addEventListener('mouseup',e=>{if(e.button===0){breakHold=false;mineP=0}if(e.but
 addEventListener('contextmenu',e=>e.preventDefault());
 addEventListener('wheel',e=>{if(state==='play')select(sel+(e.deltaY>0?1:-1))},{passive:true});
 addEventListener('keydown',e=>{if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();
+ if(verityChatOpen){if(e.code==='Enter'){e.preventDefault();sendVerityChat()}else if(e.code==='Escape'){e.preventDefault();closeVerityChat()}return}
  if(sub2Open){if(e.code==='Escape'||e.code==='KeyE')closeSub2();if(e.code==='Space'&&!e.repeat)noteJumpTap();if(e.code==='Escape'||e.code==='KeyE')return}
  if(state==='craft'){if(e.code==='KeyE'||e.code==='Escape')startPlay();return}
  if(state==='laptop'){if(e.code==='KeyE'||e.code==='Escape')closeLaptop();return}
@@ -824,6 +843,8 @@ addEventListener('keydown',e=>{if(['Space','ArrowUp','ArrowDown','ArrowLeft','Ar
  if(e.code==='KeyR'&&state!=='menu'&&state!=='gen'){playAfterGen=true;newWorld();return}
  if(state==='menu'&&(e.code==='Enter'||e.code==='Space')){startPlay();return}
  if(e.code==='KeyE'&&state==='play'){interact();return}
+ if(e.code==='KeyT'&&state==='play'&&nearVerity()){openVerityChat();return}
+ if(e.code==='KeyF'&&state==='play'){toggleCarry(false);return}
  if(e.code==='Escape'&&state==='play'&&!locked){state='pause';$('pause').classList.remove('hidden');return}
  if(e.code==='Space'&&!e.repeat)noteJumpTap();
  keys[e.code]=true;if(state==='play'&&/^Digit[1-9]$/.test(e.code))select(+e.code[5]-1)});
@@ -838,7 +859,7 @@ function enableTouch(){touchMode=true;noLock=true;document.body.classList.add('t
 function joyCenter(){const e=$('joyBase').getBoundingClientRect();return{x:e.left+e.width/2,y:e.top+e.height/2,r:e.width/2}}
 function setJoy(tx,ty){const c=joyCenter(),max=Math.max(20,c.r-4);let dx=tx-c.x,dy=ty-c.y,d=Math.hypot(dx,dy)||1;if(d>max){dx=dx/d*max;dy=dy/d*max}const kn=$('joyKnob');if(kn)kn.style.transform='translate('+dx+'px,'+dy+'px)';joy.x=dx/max;joy.y=-dy/max}
 function resetJoy(){joy.active=false;joy.id=null;joy.x=0;joy.y=0;const kn=$('joyKnob');if(kn)kn.style.transform=''}
-function uiAt(x,y){const el=document.elementFromPoint(x,y);return el&&el.closest&&el.closest('.tbtn,#joyBase,#hotbar,.ov,.btn,#touchBtns,.ctrl-btn,#ctrlBtnHud,#sub2')}
+function uiAt(x,y){const el=document.elementFromPoint(x,y);return el&&el.closest&&el.closest('.tbtn,#joyBase,#hotbar,.ov,.btn,#touchBtns,.ctrl-btn,#ctrlBtnHud,#sub2,#verityChat,#btnTalk,#btnCarry')}
 function bindHold(el,on,off){if(!el)return;const start=e=>{e.preventDefault();e.stopPropagation();lastTouch=performance.now();unlockAudio();el.classList.add('held');on()};const end=e=>{if(e)e.preventDefault();el.classList.remove('held');off()};
  el.addEventListener('touchstart',start,{passive:false});el.addEventListener('touchend',end,{passive:false});el.addEventListener('touchcancel',end,{passive:false});
  el.addEventListener('mousedown',e=>{if(performance.now()-lastTouch<700)return;start(e)});addEventListener('mouseup',()=>{if(el.classList.contains('held'))end()})}
@@ -901,7 +922,7 @@ function triggerAttract(reason,quietToast){if(worldWrecked||state!=='play')retur
  const room=ATTRACT_FLY_MAX-flyBlocks.length,n=Math.min(ATTRACT_BLOCK_CAP,room,cands.length);
  for(let i=0;i<n;i++)ripBlock(cands[i].x,cands[i].y,cands[i].z,cands[i].b);if(n)flushDirty();
  let ents=0;const tag=e=>{const ey=e.pos.y+(e.h||.8)*.5;if(inAttractCube(e.pos.x,ey,e.pos.z)){e.attractT=ATTRACT_PULL;ents++}};
- zombies.forEach(tag);npcs.forEach(tag);wGolems.forEach(tag);creepers.forEach(tag);
+ zombies.forEach(tag);npcs.forEach(tag);wGolems.forEach(tag);creepers.forEach(tag);if(verity&&!verity.carried)tag(verity);
  for(const d of drops){if(inAttractCube(d.pos.x,d.pos.y+.55,d.pos.z)){d.attractT=ATTRACT_PULL;ents++}}
  for(let i=0;i<8;i++){const a=i/8*Math.PI*2,r=2.2+Math.random()*2.5;burst(c.x+Math.cos(a)*r-.5,c.y- .4,c.z+Math.sin(a)*r-.5,i%2?0x7ad7ff:0xfff1a8,3)}
  snd('attract');
@@ -915,7 +936,7 @@ function updAttract(dt){if(attractCd>0)attractCd=Math.max(0,attractCd-dt);if(att
  const c=attractCenter();attractBox.position.set(c.x,c.y,c.z);
  if(attractFlash>0){attractBox.visible=true;attractBox.material.opacity=Math.min(.9,attractFlash*1.5);attractBox.rotation.y+=dt*.5}else attractBox.visible=false;
  for(const e of zombies)applyEntityPull(e,dt,2.2);for(const e of npcs)applyEntityPull(e,dt,2.2);for(const e of wGolems)applyEntityPull(e,dt,2.2);
- for(const e of creepers)applyEntityPull(e,dt,3.8);
+ for(const e of creepers)applyEntityPull(e,dt,3.8);if(verity&&!verity.carried)applyEntityPull(verity,dt,1.3);
  for(const d of drops){if(!(d.attractT>0))continue;d.attractT-=dt;const dx=c.x-d.pos.x,dy=(c.y-.3)-d.pos.y,dz=c.z-d.pos.z,dist=Math.hypot(dx,dy,dz)||1;if(dist>1.1){const sp=9;d.pos.x+=dx/dist*sp*dt;d.pos.y+=dy/dist*sp*dt;d.pos.z+=dz/dist*sp*dt}}
  for(let i=flyBlocks.length-1;i>=0;i--){const f=flyBlocks[i];f.t+=dt;const dx=c.x-f.pos.x,dy=c.y-f.pos.y,dz=c.z-f.pos.z,d=Math.hypot(dx,dy,dz)||1;
   const sp=10+Math.min(18,f.t*20);f.pos.x+=dx/d*sp*dt;f.pos.y+=dy/d*sp*dt;f.pos.z+=dz/d*sp*dt;f.mesh.position.copy(f.pos);f.mesh.rotation.y+=dt*(f.spin||2);f.mesh.rotation.x+=dt*2.2;
@@ -931,9 +952,10 @@ function aimInfo(){const o=eye(),d=look();const hit=raycast(o,d,REACH);const mt=
  const zt=targetZombie(o,d,mt);if(zt)cands.push({kind:'zombie',e:zt.z,t:zt.t});
  const nt=targetNpc(o,d,mt);if(nt)cands.push({kind:nt.n.type,e:nt.n,t:nt.t});
  const wg=targetList(wGolems,.5,0,2.6,o,d,mt);if(wg)cands.push({kind:'wgolem',e:wg.e,t:wg.t});
+ if(verity&&!verity.carried){const t=rayBox(o,d,{x:verity.pos.x-.5,y:verity.pos.y-.45,z:verity.pos.z-.5},{x:verity.pos.x+.5,y:verity.pos.y+.7,z:verity.pos.z+.5});if(t!==null&&t<mt)cands.push({kind:'verity',e:verity,t})}
  const cr=targetList(creepers,.35,0,1.8,o,d,mt);if(cr)cands.push({kind:'creeper',e:cr.e,t:cr.t});
  cands.sort((a,b)=>a.t-b.t);return{hit,ent:cands[0]||null}}
-function attack(ent){swing=1;const dmg=playerDmg();if(ent.kind==='zombie')hitZombie(ent.e,dmg,P.pos);else if(ent.kind==='golem')killGolem(ent.e,true);else if(ent.kind==='wgolem')hitWGolem(ent.e,dmg,true);else if(ent.kind==='creeper')hitCreeper(ent.e,dmg);else pokeVillager(ent.e)}
+function attack(ent){swing=1;const dmg=playerDmg();if(ent.kind==='zombie')hitZombie(ent.e,dmg,P.pos);else if(ent.kind==='golem')killGolem(ent.e,true);else if(ent.kind==='wgolem')hitWGolem(ent.e,dmg,true);else if(ent.kind==='creeper')hitCreeper(ent.e,dmg);else if(ent.kind==='verity')hitVerity(1);else pokeVillager(ent.e)}
 function breakBlock(hit){if(!hit||hit.b===BEDROCK)return;swing=1;setBlock(hit.x,hit.y,hit.z,AIR);burst(hit.x,hit.y,hit.z,tileAvg[faceTile(hit.b,0)],10);snd('break');mined++;if(hit.b===DIAMOND)diamonds++;addItem(BD[hit.b].drop);triggerAttract('mine')}
 function doBreak(){const a=aimInfo();if(a.ent){attack(a.ent);return a.ent.kind}if(a.hit){breakBlock(a.hit);return 'block'}return null}
 function handleMining(dt){actT-=dt;const a=aimInfo();
@@ -945,7 +967,7 @@ function handleMining(dt){actT-=dt;const a=aimInfo();
  if(actT>0)return;mineP+=dt/t;swing=Math.max(swing,.5);if(mineP>=1){breakBlock(hit);mineP=0;mineKey='';actT=.12}}
 let missileCd=0,camShake=0,worldWrecked=false,dfLaunch=null;
 function endDongfeng(){if(!dfLaunch)return;if(dfLaunch.mesh){scene.remove(dfLaunch.mesh);dfLaunch.mesh.traverse(o=>{if(o.geometry)o.geometry.dispose()})}dfLaunch=null}
-function wipeWorld(){xform=null;buildJob=null;world.fill(0);colTop.fill(-1);torches.clear();worldWrecked=true;chunks.forEach(discardChunk);clearAllMobs();if(laptop&&laptop.mesh)laptop.mesh.visible=false;if(laptop&&laptop.sign)laptop.sign.visible=false;if(buildPc&&buildPc.mesh)buildPc.mesh.visible=false;if(buildPc&&buildPc.sign)buildPc.sign.visible=false;zTimer=cTimer=wgTimer=1e9}
+function wipeWorld(){xform=null;buildJob=null;world.fill(0);colTop.fill(-1);torches.clear();worldWrecked=true;chunks.forEach(discardChunk);clearAllMobs();if(laptop&&laptop.mesh)laptop.mesh.visible=false;if(laptop&&laptop.sign)laptop.sign.visible=false;if(buildPc&&buildPc.mesh)buildPc.mesh.visible=false;if(buildPc&&buildPc.sign)buildPc.sign.visible=false;zTimer=cTimer=wgTimer=1e9;placeVerityBeside(true)}
 function detonateDongfeng(){endDongfeng();snd('boom');setTimeout(()=>{try{snd('boom')}catch(e){}},90);setTimeout(()=>{try{snd('boom')}catch(e){}},180);
  let flash=$('blastFlash');if(!flash){flash=document.createElement('div');flash.id='blastFlash';flash.style.cssText='position:fixed;inset:0;pointer-events:none;background:#fff;opacity:0;z-index:18;transition:opacity .4s';document.body.appendChild(flash)}
  flash.style.transition='opacity .15s';flash.style.background='#fff';flash.style.opacity='1';setTimeout(()=>{flash.style.transition='opacity .6s';flash.style.opacity='0'},220);
@@ -1371,6 +1393,7 @@ function finishWorldSpawn(){
   gameTime=0;zTimer=0;mined=kills=diamonds=golemKills=golemDeaths=0;respawn();resetInv();
   placeLaptop();
   camera.position.set(spawn.x,spawn.y+8,spawn.z);buildAround(spawn.x,spawn.z,VIEW+20);
+  spawnVerity(true);
   villages.forEach(spawnVillageMobs);spawnWorldGolems(24);spawnWhiteGolems(WG_TARGET);
   for(let i=0;i<4;i++)spawnZombie(20);spawnCreeper(22);spawnCreeper(28);
   const wantPlay=playAfterGen;playAfterGen=false;gen=null;
@@ -1381,13 +1404,228 @@ function finishWorldSpawn(){
 }
 function newWorld(){beginGen()}
 
+// ================= Verity (offline yellow companion, not a white orb) =================
+let verity=null,verityChatOpen=false,verityCursor={};
+const VERITY_GREET="Hi, I'm Verity";
+const VERITY_OUCH="Ouch, why you hit me?";
+const VERITY_HP=5;
+const VERITY_BAGS={
+ computer:[
+  "The cyan laptop is the material computer: Yes turns every non-air block into a diamond block, and No turns them into glass. The orange one is the building computer: Yes adds houses, towers, halls, and chapels. No changes nothing. Press E only when you are next to one.",
+  "青色是材质电脑：是＝钻石块，否＝玻璃块。橙色是建造电脑：是＝盖房屋、塔、大厅和小教堂，否＝不改地形。只有靠近电脑时，E 才是用电脑。"
+ ],
+ gravity:[
+  "If you mine a block or pick up an item, loose blocks within a 10×10×10 cube around you are pulled in. Bedrock is not pulled.",
+  "挖方块或捡起东西时，你周围 10×10×10 的松动方块会被吸过来。基岩不会被吸走。"
+ ],
+ missile:[
+  "Hotbar 8 wipes the whole world. Hotbar 9 digs a deep pit. If the world disappears, I come back beside you.",
+  "第 8 格会清空世界，第 9 格挖一个深坑。世界没了的话，我会回到你身边。"
+ ],
+ carry:[
+  "Look at me and press F to pick me up. Press F again to put me down. On a phone, tap 抱起 or 放下.",
+  "看着我按 F 把我抱起来，再按一次 F 放下。手机请点「抱起」或「放下」。"
+ ],
+ craft:[
+  "Press E away from both computers to open crafting. Next to a computer, E uses that computer instead of crafting.",
+  "离开两台电脑再按 E，才是合成。靠近电脑时，E 是使用那台电脑。"
+ ],
+ map:[
+  "This land is 512 blocks wide, 1024 blocks long, and 40 blocks tall.",
+  "这片陆地宽 512 格、长 1024 格、高 40 格。"
+ ],
+ golem:[
+  "White iron golems are peaceful. Those hostile white ball enemies are gone. I am the yellow ball, Verity.",
+  "白色铁傀儡是和平的。会攻击的白色光球已经没有了。我是黄色的 Verity。"
+ ],
+ fly:[
+  "Tap 开始操纵, then open 二, and turn on 创造 to fly. Double-tap jump also toggles flight.",
+  "点「开始操纵」，打开「二」，再打开创造就能飞。连按两次跳跃也可以切换飞行。"
+ ],
+ self:[
+  "I am Verity, a yellow companion saved in this page. I am not a white orb, and I am not a live AI.",
+  "我是 Verity，这页里的黄色伙伴。我不是白色光球，也不是联网的人工智能。"
+ ],
+ hit:[
+  "Please don't hit me. If I faint, I appear again beside you.",
+  "请别打我。如果我倒下了，我会在你身边再出现。"
+ ]
+};
+const VERITY_DEFAULT=[
+ "I can explain the two computers, gravity, missiles, crafting, and how to carry me. These are saved replies, not a live AI.",
+ "我可以讲两台电脑、重力、导弹、合成，以及怎么抱着我。这些是写好的回答，不是真正的人工智能。"
+];
+function verityReply(raw){
+ const q=String(raw||'').toLowerCase();
+ let key='default';
+ if(/重力|gravity|吸引|pickup pull|吸/.test(q))key='gravity';
+ else if(/电脑|laptop|diamond|glass|钻石|玻璃|建造|材质|house|tower|chapel|hall/.test(q))key='computer';
+ else if(/导弹|missile|dongfeng|东风|slot\s*8|第八|hotbar/.test(q))key='missile';
+ else if(/抱|carry|pick me|放下|drop me|\bf\b/.test(q))key='carry';
+ else if(/合成|craft|制作/.test(q))key='craft';
+ else if(/地图|多大|512|1024|how big|world size/.test(q))key='map';
+ else if(/golem|傀儡|白球|white orb|光球/.test(q))key='golem';
+ else if(/飞|fly|creative|创造/.test(q))key='fly';
+ else if(/打我|hit me|ouch|hurt|为什么打/.test(q))key='hit';
+ else if(/verity|你是谁|who are you|hello|hi\b|你好|嗨|你叫/.test(q))key='self';
+ const bag=key==='default'?VERITY_DEFAULT:VERITY_BAGS[key];
+ const i=verityCursor[key]||0;verityCursor[key]=i+1;
+ return bag[i%bag.length];
+}
+function makeVerityTag(){
+ const cv=document.createElement('canvas');cv.width=256;cv.height=64;const g=cv.getContext('2d');
+ g.fillStyle='rgba(40,24,0,.8)';g.fillRect(28,8,200,48);g.strokeStyle='#ffd23a';g.lineWidth=6;g.strokeRect(28,8,200,48);
+ g.fillStyle='#ffe56a';g.font='bold 36px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText('Verity',128,32);
+ const tex=new THREE.CanvasTexture(cv);tex.magFilter=THREE.NearestFilter;tex.minFilter=THREE.NearestFilter;
+ const mesh=new THREE.Mesh(new THREE.PlaneGeometry(1.15,.32),new THREE.MeshBasicMaterial({map:tex,transparent:true,depthWrite:false,side:THREE.DoubleSide}));
+ mesh.position.set(0,.78,0);return mesh;
+}
+function clearVerity(){
+ if(verity&&verity.group){scene.remove(verity.group);verity.group.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){if(o.material.map)o.material.map.dispose();if(o.material.dispose)o.material.dispose()}})}
+ verity=null;closeVerityChat();
+}
+function sayVerity(text){
+ if(!verity)return;
+ verity.line=text;verity.bubbleUntil=performance.now()+7000;
+ const b=$('verityBubble');if(b)b.textContent=text;
+}
+function veritySpot(){
+ const tries=[[1.5,0.15],[-1.5,0.15],[0.2,1.55],[0.2,-1.55],[1.2,1.2]];
+ for(const [dx,dz] of tries){
+  const x=P.pos.x+dx,z=P.pos.z+dz,ix=Math.floor(x),iz=Math.floor(z);
+  if(worldWrecked)return {x,y:P.pos.y+0.4,z};
+  if(!inB(ix,1,iz))continue;
+  const gy=groundY(ix,iz);if(gy<1)continue;
+  const y=gy+1.42;
+  if(solidAt(ix,Math.floor(y),iz))continue;
+  return {x,y,z};
+ }
+ return {x:P.pos.x+1.5,y:worldWrecked?P.pos.y+0.4:P.pos.y,z:P.pos.z+0.2};
+}
+function spawnVerity(greet){
+ try{
+  clearVerity();
+  const spot=veritySpot();
+  const group=new THREE.Group();
+  const ball=new THREE.Mesh(new THREE.SphereGeometry(.42,18,14),new THREE.MeshLambertMaterial({color:0xffd23a,emissive:0x6a4200}));
+  group.add(ball);
+  const tag=makeVerityTag();group.add(tag);
+  group.position.set(spot.x,spot.y,spot.z);scene.add(group);
+  verity={group,tag,mesh:group,pos:new THREE.Vector3(spot.x,spot.y,spot.z),hp:VERITY_HP,carried:false,line:'',h:.84,hw:.42,bubbleUntil:0};
+  if(greet)sayVerity(VERITY_GREET);
+  syncVerityHud();
+ }catch(err){verity=null;toast('Verity 没有出现：'+(err&&err.message||err))}
+}
+function placeVerityBeside(greet){
+ if(!verity){spawnVerity(!!greet);return}
+ verity.carried=false;verity.hp=VERITY_HP;
+ const spot=veritySpot();verity.pos.set(spot.x,spot.y,spot.z);
+ if(greet)sayVerity(VERITY_GREET);else syncVerityHud();
+}
+function nearVerity(){
+ if(!verity)return false;
+ const dx=P.pos.x-verity.pos.x,dy=(P.pos.y+.9)-verity.pos.y,dz=P.pos.z-verity.pos.z;
+ return dx*dx+dz*dz<3.4*3.4&&Math.abs(dy)<3.2;
+}
+function rayHitsVerity(){
+ if(!verity||verity.carried)return false;
+ const o=eye(),d=look(),hit=raycast(o,d,REACH),mt=Math.min(4.2,hit?hit.t:4.2);
+ const t=rayBox(o,d,{x:verity.pos.x-.5,y:verity.pos.y-.45,z:verity.pos.z-.5},{x:verity.pos.x+.5,y:verity.pos.y+.7,z:verity.pos.z+.5});
+ return t!==null&&t<=mt;
+}
+function hitVerity(amount){
+ if(!verity)return 0;
+ sayVerity(VERITY_OUCH);
+ const dmg=Math.max(1,amount|0);verity.hp-=dmg;
+ if(verity.hp<=0){spawnVerity(true);return verity?verity.hp:0}
+ syncVerityHud();return verity.hp;
+}
+function dropVerity(){
+ if(!verity)return false;
+ verity.carried=false;
+ const cp=Math.cos(P.pitch),fx=-Math.sin(P.yaw)*cp,fz=-Math.cos(P.yaw)*cp;
+ let x=P.pos.x+(Math.abs(fx)+Math.abs(fz)<.2?0:fx)*1.7,z=P.pos.z+(Math.abs(fx)+Math.abs(fz)<.2?1:fz)*1.7;
+ if(worldWrecked){verity.pos.set(x,P.pos.y+0.4,z);syncVerityHud();return true}
+ const ix=Math.floor(x),iz=Math.floor(z);
+ const gy=inB(ix,1,iz)?groundY(ix,iz):-1;
+ verity.pos.set(x,gy>=1?gy+1.42:P.pos.y,z);syncVerityHud();return true;
+}
+function toggleCarry(fromTouch){
+ if(!verity||state!=='play')return false;
+ if(verity.carried){dropVerity();return 'drop'}
+ if(fromTouch?nearVerity():rayHitsVerity()){verity.carried=true;syncVerityHud();return 'carry'}
+ return false;
+}
+function openVerityChat(){
+ if(!nearVerity()||state!=='play')return false;
+ verityChatOpen=true;const p=$('verityChat');if(p)p.classList.remove('hidden');
+ for(const k in keys)keys[k]=false;breakHold=placeHold=false;
+ const input=$('verityInput');if(input){try{input.focus()}catch(e){}}
+ return true;
+}
+function closeVerityChat(){
+ verityChatOpen=false;const p=$('verityChat');if(p)p.classList.add('hidden');
+}
+function sendVerityChat(){
+ const input=$('verityInput');const text=input?(input.value||'').trim():'';if(!text)return '';
+ if(input)input.value='';
+ const reply=verityReply(text);
+ const log=$('verityLog');
+ if(log){const you=document.createElement('div');you.textContent='You: '+text;const her=document.createElement('div');her.textContent='Verity: '+reply;log.appendChild(you);log.appendChild(her);log.scrollTop=log.scrollHeight}
+ sayVerity(reply);return reply;
+}
+function syncVerityHud(){
+ const hud=$('verityHud'),bubble=$('verityBubble'),name=$('verityName');
+ const near=nearVerity()&&state==='play';
+ document.body.classList.toggle('near-verity',!!(near&&verity&&!verity.carried));
+ document.body.classList.toggle('carrying-verity',!!(verity&&verity.carried));
+ const carry=$('btnCarry');if(carry)carry.textContent=verity&&verity.carried?'放下':'抱起';
+ if(!verity||!verity.group){if(hud)hud.style.display='none';return}
+ verity.group.position.copy(verity.pos);
+ if(verity.tag)verity.tag.quaternion.copy(camera.quaternion);
+ if(name)name.textContent='Verity';
+ if(!hud||!bubble)return;
+ const v=verity.pos.clone();v.y+=.95;v.project(camera);
+ const on=v.z<1&&state!=='gen';
+ hud.style.display=on?'block':'none';
+ if(!on)return;
+ hud.style.left=((v.x*.5+.5)*innerWidth)+'px';
+ hud.style.top=((-v.y*.5+.5)*innerHeight)+'px';
+ const show=!!verity.line&&performance.now()<verity.bubbleUntil;
+ bubble.style.display=show?'block':'none';
+ if(show)bubble.textContent=verity.line;
+}
+function updVerity(dt){
+ if(!verity)return;
+ if(verity.carried){
+  const cp=Math.cos(P.pitch),fx=-Math.sin(P.yaw)*cp,fz=-Math.cos(P.yaw)*cp;
+  const rx=Math.cos(P.yaw),rz=-Math.sin(P.yaw);
+  verity.pos.set(P.pos.x+rx*.7+fx*.25,P.pos.y+1.2,P.pos.z+rz*.7+fz*.25);
+ }else if(worldWrecked){
+  verity.pos.x+=(P.pos.x+1.3-verity.pos.x)*Math.min(1,dt*4);
+  verity.pos.z+=(P.pos.z-verity.pos.z)*Math.min(1,dt*4);
+  verity.pos.y+=(P.pos.y+0.5-verity.pos.y)*Math.min(1,dt*4);
+ }else if(!(verity.attractT>0)){
+  const ix=Math.floor(verity.pos.x),iz=Math.floor(verity.pos.z);
+  const gy=inB(ix,1,iz)?groundY(ix,iz):-1;
+  const target=gy>=1?gy+1.42:verity.pos.y;
+  if(verity.pos.y>target)verity.pos.y=Math.max(target,verity.pos.y-14*dt);
+  else verity.pos.y+=(target-verity.pos.y)*Math.min(1,dt*8);
+ }
+ syncVerityHud();
+}
+if($('verityForm'))$('verityForm').addEventListener('submit',e=>{e.preventDefault();sendVerityChat()});
+if($('verityClose'))$('verityClose').onclick=()=>closeVerityChat();
+if($('btnTalk'))$('btnTalk').onclick=()=>{unlockAudio();openVerityChat()};
+if($('btnCarry'))$('btnCarry').onclick=()=>{unlockAudio();toggleCarry(true)};
+
 // ================= loop =================
 let last=performance.now(),frames=0,stopAt=Infinity,fpsT=0,fpsN=0,fps=0;
 function frame(now){frames++;if(frames>=stopAt)return;requestAnimationFrame(frame);
  const dt=Math.min(.05,Math.max(0,(now-last)/1000));last=now;
  if(gen){try{stepGen()}catch(err){gen=null;const ov=$('genOv');if(ov)ov.classList.add('hidden');toast('世界生成失败：'+(err&&err.message||err));state='menu'}}
  else{try{stepTransform()}catch(err){xform=null;toast('变换失败：'+(err&&err.message||err))}try{stepBuild()}catch(err){buildJob=null;toast('建造失败：'+(err&&err.message||err))}updateLapUI();
- if(state==='play'){update(dt);updZombies(dt);updNpcs(dt);updWGolems(dt);updCreepers(dt);updDrops(dt);updAttract(dt);updParts(dt);updDongfeng(dt)}else if(state==='dead'){updParts(dt)}}
+ if(state==='play'){update(dt);updZombies(dt);updNpcs(dt);updWGolems(dt);updCreepers(dt);updDrops(dt);updAttract(dt);updParts(dt);updDongfeng(dt)}else if(state==='dead'){updParts(dt)} if(!gen)updVerity(dt)}
  clouds.position.x+=dt*.8;if(clouds.position.x>80)clouds.position.x=-60;
  updCamera(dt);sunMesh.position.copy(camera.position).add(new THREE.Vector3(-60,90,-40));sunMesh.lookAt(camera.position);
  updChunks(meshBoost>0?(touchMode?3:8):undefined);if(meshBoost>0)meshBoost--;
@@ -1401,7 +1639,7 @@ if(touchMode)enableTouch();newWorld();$('hud').style.display='none';requestAnima
 function bgInfo(){const hemi=scene.children.find(o=>o.isHemisphereLight),dir=scene.children.find(o=>o.isDirectionalLight);return {sky:SKY.getHex(),water:WATERFOG.getHex(),cave:CAVEFOG.getHex(),bg:scene.background.getHex(),fog:scene.fog.color.getHex(),hemiSky:hemi?hemi.color.getHex():null,hemiGround:hemi?hemi.groundColor.getHex():null,hemiInt:hemi?hemi.intensity:null,dirColor:dir?dir.color.getHex():null,dirInt:dir?dir.intensity:null}}
 // tiny debug hook (used for automated testing)
 window.__mc={startPlay,state:()=>state,P,zombies,npcs,wGolems,creepers,drops,villages:()=>villages,stats,get,setBlock,doBreak,doPlace,fireMissile,fireDongfeng,detonateDongfeng,select,spawnZombie,makeNpc,makeZombie,makeWGolem,makeCreeper,explodeCreeper,hitWGolem,hitCreeper,openCraft,craft,RECIPES,count,addItem,inv:()=>inv,triggerAttract,inAttractCube,flyBlocks,ATTRACT_SIDE,ATTRACT_HALF,attractCd:()=>attractCd,attractFlash:()=>attractFlash,setAttractCd:v=>{attractCd=v},clearFlyBlocks,
- atk:()=>atkMult,baseDmg:()=>baseDmg,playerDmg,golemCount,golemKills:()=>golemKills,golemDeaths:()=>golemDeaths,kills:()=>kills,colTop,SX,SZ,VIEW:()=>VIEW,touchMode:()=>touchMode,enableTouch,joy:()=>joy,applyQuality,unlockAudio,stopAfter:n=>{stopAt=frames+n},clearZombies:()=>{while(zombies.length)removeZombie(zombies[0]);zTimer=999},clearCreepers:()=>{while(creepers.length)removeCreeper(creepers[0]);cTimer=999},setGameTime:t=>{gameTime=t},fps:()=>fps,setNoLock:()=>{noLock=true},chunksBuilt:()=>chunks.filter(c=>c.built).length,controlMode:()=>controlMode,setControlMode:on=>{controlMode=!!on;syncModeUI()},creative:()=>creative,setCreative,flying:()=>flying,setFlying,openSub2,closeSub2,sub2Open:()=>sub2Open,worldWrecked:()=>worldWrecked,blockCount:()=>{let n=0;for(let i=0;i<world.length;i++)if(world[i])n++;return n},ids:{STICK,PLANKS,LOG,COAL_I,TORCH,IRON,IRON_INGOT,IRON_SWORD,WOOD_PICK,STONE_PICK,COBBLE,TABLE,FURNACE,MISSILE,DF_MISSILE,SAND,DIAMOND,DIAMOND_I,DBLK,GLASS,AIR,BEDROCK},diamonds:()=>diamonds,SY,DBLK,GLASS,AIR,BEDROCK,DIAMOND,nearLaptop,laptopPos:()=>laptop&&{x:laptop.x,y:laptop.y,z:laptop.z,kind:laptop.kind},buildPos:()=>buildPc&&{x:buildPc.x,y:buildPc.y,z:buildPc.z,kind:buildPc.kind,visible:!!(buildPc.mesh&&buildPc.mesh.visible)},interact,chooseLaptop,chooseBuild,openLaptop,openBuild,closeLaptop,closeBuild,nearestKind:()=>{const c=nearestComputer();return c?c.kind:null},xformActive:()=>!!xform,buildActive:()=>!!buildJob,finishTransform,finishBuild,buildReport,worldChecksum,genReady:()=>!gen,stepGen,standColumn,buildChunk,chunkIndexCount,updateLapUI,overlapsPlayer,worldBytes:()=>world.byteLength,auditBlocks,wipeWorld,newWorld,bgInfo,LAP_REACH,BD};
+ atk:()=>atkMult,baseDmg:()=>baseDmg,playerDmg,golemCount,golemKills:()=>golemKills,golemDeaths:()=>golemDeaths,kills:()=>kills,colTop,SX,SZ,VIEW:()=>VIEW,touchMode:()=>touchMode,enableTouch,joy:()=>joy,applyQuality,unlockAudio,stopAfter:n=>{stopAt=frames+n},clearZombies:()=>{while(zombies.length)removeZombie(zombies[0]);zTimer=999},clearCreepers:()=>{while(creepers.length)removeCreeper(creepers[0]);cTimer=999},setGameTime:t=>{gameTime=t},fps:()=>fps,setNoLock:()=>{noLock=true},chunksBuilt:()=>chunks.filter(c=>c.built).length,controlMode:()=>controlMode,setControlMode:on=>{controlMode=!!on;syncModeUI()},creative:()=>creative,setCreative,flying:()=>flying,setFlying,openSub2,closeSub2,sub2Open:()=>sub2Open,worldWrecked:()=>worldWrecked,blockCount:()=>{let n=0;for(let i=0;i<world.length;i++)if(world[i])n++;return n},ids:{STICK,PLANKS,LOG,COAL_I,TORCH,IRON,IRON_INGOT,IRON_SWORD,WOOD_PICK,STONE_PICK,COBBLE,TABLE,FURNACE,MISSILE,DF_MISSILE,SAND,DIAMOND,DIAMOND_I,DBLK,GLASS,AIR,BEDROCK},diamonds:()=>diamonds,SY,DBLK,GLASS,AIR,BEDROCK,DIAMOND,nearLaptop,laptopPos:()=>laptop&&{x:laptop.x,y:laptop.y,z:laptop.z,kind:laptop.kind},buildPos:()=>buildPc&&{x:buildPc.x,y:buildPc.y,z:buildPc.z,kind:buildPc.kind,visible:!!(buildPc.mesh&&buildPc.mesh.visible)},interact,chooseLaptop,chooseBuild,openLaptop,openBuild,closeLaptop,closeBuild,nearestKind:()=>{const c=nearestComputer();return c?c.kind:null},xformActive:()=>!!xform,buildActive:()=>!!buildJob,finishTransform,finishBuild,buildReport,worldChecksum,genReady:()=>!gen,stepGen,standColumn,buildChunk,chunkIndexCount,updateLapUI,overlapsPlayer,worldBytes:()=>world.byteLength,auditBlocks,wipeWorld,newWorld,bgInfo,keys:()=>keys,verity:()=>verity&&{x:verity.pos.x,y:verity.pos.y,z:verity.pos.z,hp:verity.hp,carried:!!verity.carried,line:verity.line},hitVerity,toggleCarry,dropVerity,openVerityChat,closeVerityChat,sendVerityChat,verityReply,nearVerity,rayHitsVerity,syncVerityHud,updVerity,chatOpen:()=>verityChatOpen,LAP_REACH,BD};
 })();
 
 </script>
